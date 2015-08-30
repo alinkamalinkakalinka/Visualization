@@ -6,12 +6,14 @@
                 <h1 class="panel-title pull-left">Explore and Select Data</h1>
             </div>
             <div class="panel-body">
-                {{tree-selection treedata=controller.treeContent selection=controller.dataSelection}}  
+              Search: {{search-box selectRes='submitSearch' treedata=treedata term=term activeIndex=activeIndex results=filteredResults class="searchField"}}
+              <p></p>
+                {{tree-selection treedata=controller.treeContent selection=controller.dataSelection valueBinding=treedata}}
             </div>
             <div class="panel-footer clearfix">
             </div>
-        </div>                                                      
-    </div>           
+        </div>
+    </div>
     <div {{bind-attr class="isToggled:col-md-7:col-md-12"}}>
         <!-- Data Selection Preview -->
         <div class="panel panel-default">
@@ -20,21 +22,21 @@
 
                 <button type="button" class="btn btn-default btn-xs pull-right" {{action 'toggle'}}>
                     {{#if isToggled}}
-                    <span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span> 
+                    <span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span>
                     {{else}}
-                    <span class="glyphicon glyphicon-resize-small" aria-hidden="true"></span> 
+                    <span class="glyphicon glyphicon-resize-small" aria-hidden="true"></span>
                     {{/if}}
                 </button>
 
             </div>
             <div class="panel-body">
-                {{data-table preview=controller.dataSelection datasource=controller.selectedDatasource}} 
+                {{data-table preview=controller.dataSelection datasource=controller.selectedDatasource}}
             </div>
             <div class="panel-footer clearfix">
                 <button type="button" class="btn btn-default pull-right" {{action 'visualize'}}>
                     <span class="glyphicon glyphicon-stats" aria-hidden="true"></span>   Visualize
                 </button>
             </div>
-        </div>     
+        </div>
     </div>
 </div>

@@ -3,6 +3,8 @@ import Resolver from 'ember/resolver';
 import loadInitializers from 'ember/load-initializers';
 import config from './config/environment';
 
+Ember.LOG_BINDINGS = true;
+
 Ember.MODEL_FACTORY_INJECTIONS = true;
 
 var App = Ember.Application.extend({
@@ -10,6 +12,7 @@ var App = Ember.Application.extend({
   podModulePrefix: config.podModulePrefix,
   Resolver: Resolver
 });
+
 
 loadInitializers(App, config.modulePrefix);
 

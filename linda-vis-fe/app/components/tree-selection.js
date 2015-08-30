@@ -1,5 +1,9 @@
 import Ember from "ember";
 
+var Data = Ember.Object.create({
+  data: 'treedata'
+});
+
 /* global _ */
 /*jshint loopfunc: true */
 export default Ember.Component.extend({
@@ -23,7 +27,7 @@ export default Ember.Component.extend({
             icons:false,
             selectMode: 3,
             glyph: {
-                map: {               
+                map: {
                     checkbox: "glyphicon glyphicon-unchecked",
                     checkboxSelected: "glyphicon glyphicon-check",
                     checkboxUnknown: "glyphicon glyphicon-share",
@@ -35,8 +39,8 @@ export default Ember.Component.extend({
                 }
             },
             wide: {
-                iconWidth: "0.3em", 
-                iconSpacing: "0.5em", 
+                iconWidth: "0.3em",
+                iconSpacing: "0.5em",
                 levelOfs: "1.5em"
             },
             filter: {
@@ -59,7 +63,7 @@ export default Ember.Component.extend({
                 var branch_root = self.getBranchRoot(node);
                 var branch_root_title = branch_root.title;
                 var selected = tree.getSelectedNodes();
-              
+
                 if (node.selected) {
                     tree.filterBranches(function(node) {
                         if (node.title === branch_root_title) {
@@ -68,7 +72,7 @@ export default Ember.Component.extend({
                             node.hideCheckbox = true;
                             node.render(true);
                         }
-                    });              
+                    });
 
                     for (var i = 0; i < selected.length; i++) {
                         var node_ = selected[i];
@@ -99,7 +103,7 @@ export default Ember.Component.extend({
                         }
                     }
                 } else {
-                   
+
                     selection = _.filter(selection, function(item) {
 
                         var is_selected = false;
@@ -150,20 +154,21 @@ export default Ember.Component.extend({
         return node;
     },
     hideCheckbox: function(type) {
-        switch (type) {
-            case "Ratio":
-            case "Interval":
-            case "Nominal":
-            case "Angular":
-            case "Geographic Latitude":
-            case "Geographic Longitude":
-            case "Class":
-                return false;
-            case "Resource":
-            case "Nothing":
-                return true;
-        }
-        console.error("Unknown category: '" + type + "'");
-        return null;
-    }
+      switch (type) {
+        case "Ratio":
+        case "Interval":
+        case "Nominal":
+        case "Angular":
+        case "Geographic Latitude":
+        case "Geographic Longitude":
+        case "Class":
+          return false;
+        case "Resource":
+        case "Nothing":
+          return true;
+      }
+      console.error("Unknown category: '" + type + "'");
+      return null;
+
+    },
 });

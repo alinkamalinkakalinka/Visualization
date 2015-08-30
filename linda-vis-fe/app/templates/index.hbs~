@@ -195,15 +195,5 @@
             18. TS1 (statistical dataset; RDF format)
             {{/link-to}}
         </li>
-	<li>
-		{{#link-to
-		'datasource'
-		'test'
-		datasetsEndpointURI
-		'some/test/path'
-		'rdf'}}
-		19. Teh test
-		{{/link-to}}
-	</li>
     </ul>
 </div>
