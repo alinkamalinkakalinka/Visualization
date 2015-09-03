@@ -1,4 +1,4 @@
-var GraphStoreClient = require('graph-store-client');
+//var GraphStoreClient = require('graph-store-client');
 var _ = require('lodash');
 
 function store(vis_config, dataselection, config_id, config_name, config_graph, config_endpoint) {

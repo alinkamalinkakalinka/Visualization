@@ -3,6 +3,7 @@
  */
 import Ember from 'ember';
 import computedFilterByQuery from 'ember-cli-filter-by-query';
+c
 
 export default Ember.Controller.extend({
   queryParams: ['term'],

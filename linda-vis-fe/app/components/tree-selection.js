@@ -1,9 +1,5 @@
 import Ember from "ember";
 
-var Data = Ember.Object.create({
-  data: 'treedata'
-});
-
 /* global _ */
 /*jshint loopfunc: true */
 export default Ember.Component.extend({

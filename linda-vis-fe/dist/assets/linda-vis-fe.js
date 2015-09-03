@@ -1,3 +1,4 @@
+"use strict";
 /* jshint ignore:start */
 
 /* jshint ignore:end */
@@ -16,6 +17,8 @@ define('linda-vis-fe/adapters/application', ['exports', 'ember-data'], function 
 define('linda-vis-fe/app', ['exports', 'ember', 'ember/resolver', 'ember/load-initializers', 'linda-vis-fe/config/environment'], function (exports, Ember, Resolver, loadInitializers, config) {
 
   'use strict';
+
+  Ember['default'].LOG_BINDINGS = true;
 
   Ember['default'].MODEL_FACTORY_INJECTIONS = true;
 
@@ -168,54 +171,87 @@ define('linda-vis-fe/components/property-item', ['exports', 'ember'], function (
   });
 
 });
+define('linda-vis-fe/components/search-box', ['exports', 'ember'], function (exports, Ember) {
+
+  'use strict';
+
+  /**
+   * Created by alina on 30.08.15. treedata or content???? how to bind???
+   */
+  exports['default'] = Ember['default'].TextField.extend({
+    placeholder: 'keyword',
+
+    observeInput: (function () {
+      if (!this.get('holdValue')) {
+        var inp = this.get('value');
+        this.set('term', inp);
+      }
+    }).observes('value', 'holdValue'),
+
+    didInsertElement: function didInsertElement() {
+      this.$().focus();
+      var val = this.get('term');
+      this.setProperties({
+        activeIndex: -1,
+        value: val
+      });
+    } });
+
+});
 define('linda-vis-fe/components/tree-selection', ['exports', 'ember'], function (exports, Ember) {
 
     'use strict';
 
+    var Data = Ember['default'].Object.create({
+        data: 'treedata'
+    });
+
+    /* global _ */
+    /*jshint loopfunc: true */
     exports['default'] = Ember['default'].Component.extend({
-        tagName: "div",
+        tagName: 'div',
         tree: null,
         setContent: (function () {
-            console.log("TREE SELECTION COMPONENT - CREATING SELECTION TREE");
-            var content = this.get("treedata");
-            var selection = this.get("selection");
+            console.log('TREE SELECTION COMPONENT - CREATING SELECTION TREE');
+            var content = this.get('treedata');
+            var selection = this.get('selection');
             console.dir(JSON.stringify(selection));
 
             //selection = []; todo needs to be reset
-            this.set("selection", selection);
+            this.set('selection', selection);
 
             var self = this;
 
-            this.$(this.get("element")).fancytree({
-                extensions: ["filter", "glyph", "edit", "wide"],
+            this.$(this.get('element')).fancytree({
+                extensions: ['filter', 'glyph', 'edit', 'wide'],
                 source: content,
                 checkbox: true,
                 icons: false,
                 selectMode: 3,
                 glyph: {
                     map: {
-                        checkbox: "glyphicon glyphicon-unchecked",
-                        checkboxSelected: "glyphicon glyphicon-check",
-                        checkboxUnknown: "glyphicon glyphicon-share",
-                        error: "glyphicon glyphicon-warning-sign",
-                        expanderClosed: "glyphicon glyphicon-plus-sign",
-                        expanderLazy: "glyphicon glyphicon-plus-sign",
-                        expanderOpen: "glyphicon glyphicon-minus-sign",
-                        loading: "glyphicon glyphicon-refresh"
+                        checkbox: 'glyphicon glyphicon-unchecked',
+                        checkboxSelected: 'glyphicon glyphicon-check',
+                        checkboxUnknown: 'glyphicon glyphicon-share',
+                        error: 'glyphicon glyphicon-warning-sign',
+                        expanderClosed: 'glyphicon glyphicon-plus-sign',
+                        expanderLazy: 'glyphicon glyphicon-plus-sign',
+                        expanderOpen: 'glyphicon glyphicon-minus-sign',
+                        loading: 'glyphicon glyphicon-refresh'
                     }
                 },
                 wide: {
-                    iconWidth: "0.3em",
-                    iconSpacing: "0.5em",
-                    levelOfs: "1.5em"
+                    iconWidth: '0.3em',
+                    iconSpacing: '0.5em',
+                    levelOfs: '1.5em'
                 },
                 filter: {
-                    mode: "dimm",
+                    mode: 'dimm',
                     autoApply: true
                 },
                 lazyLoad: function lazyLoad(event, data) {
-                    console.log("TREE SELECTION COMPONENT - LOADING CHILDREN");
-                    console.log("DATA");
+                    console.log('TREE SELECTION COMPONENT - LOADING CHILDREN');
+                    console.log('DATA');
                     console.dir(data);
                     var node = data.node;
                     var node_path = self.getNodePath(node);
@@ -223,7 +259,7 @@ define('linda-vis-fe/components/tree-selection', ['exports', 'ember'], function 
                     data.result = data.node.data._children.loadChildren(node_path.slice().reverse());
                 },
                 select: function select(event, data) {
-                    console.log("TREE SELECTION COMPONENT - GENERATING PREVIEWS");
+                    console.log('TREE SELECTION COMPONENT - GENERATING PREVIEWS');
                     var tree = data.tree;
                     var node = data.node;
                     var branch_root = self.getBranchRoot(node);
@@ -254,7 +290,7 @@ define('linda-vis-fe/components/tree-selection', ['exports', 'ember'], function 
                                 return _.isEqual(value.parent, node_path);
                             });
 
-                            if (!already_selected && node_.hideCheckbox === false && node_type !== "Class") {
+                            if (!already_selected && node_.hideCheckbox === false && node_type !== 'Class') {
 
                                 selection.pushObject({
                                     label: node_label,
@@ -294,10 +330,10 @@ define('linda-vis-fe/components/tree-selection', ['exports', 'ember'], function 
                         }
                     }
 
-                    self.set("selection", selection);
+                    self.set('selection', selection);
                 }
             });
-        }).observes("treedata").on("didInsertElement"),
+        }).observes('treedata').on('didInsertElement'),
         getNodePath: function getNodePath(node) {
             var node_path_with_labels = [];
             node_path_with_labels.push({ id: node.key, label: node.title });
@@ -312,29 +348,28 @@ define('linda-vis-fe/components/tree-selection', ['exports', 'ember'], function 
             return node_path_with_labels;
         },
         getBranchRoot: function getBranchRoot(node) {
-            while (node.parent.title !== "root") {
+            while (node.parent.title !== 'root') {
                 node = node.parent;
             }
             return node;
         },
         hideCheckbox: function hideCheckbox(type) {
             switch (type) {
-                case "Ratio":
-                case "Interval":
-                case "Nominal":
-                case "Angular":
-                case "Geographic Latitude":
-                case "Geographic Longitude":
-                case "Class":
+                case 'Ratio':
+                case 'Interval':
+                case 'Nominal':
+                case 'Angular':
+                case 'Geographic Latitude':
+                case 'Geographic Longitude':
+                case 'Class':
                     return false;
-                case "Resource":
-                case "Nothing":
+                case 'Resource':
+                case 'Nothing':
                     return true;
             }
-            console.error("Unknown category: '" + type + "'");
+            console.error('Unknown category: \'' + type + '\'');
             return null;
-        }
-    });
+        } });
 
 });
 define('linda-vis-fe/controllers/datasource', ['exports', 'ember', 'linda-vis-fe/utils/tree-selection-data-module'], function (exports, Ember, treeselection_data) {
@@ -403,6 +438,77 @@ define('linda-vis-fe/controllers/index', ['exports', 'ember'], function (exports
     });
 
 });
+define('linda-vis-fe/controllers/main', ['exports', 'ember', 'ember-cli-filter-by-query'], function (exports, Ember, computedFilterByQuery) {
+
+  'use strict';
+
+  /**
+   * Created by alina on 30.08.15.
+   */
+  exports['default'] = Ember['default'].Controller.extend({
+    queryParams: ['term'],
+    results: ['treedata'],
+    queryResults: computedFilterByQuery['default']('results', 'name', 'term').readOnly(),
+
+    filteredResults: (function () {
+      return this.get('queryResults');
+    }).property('queryResults'),
+
+    actions: {
+      submitSearch: function submitSearch(result) {
+        this.transitionTo('results', { queryParams: { term: result } });
+      }
+    }
+  });
+
+});
+define('linda-vis-fe/controllers/results', ['exports', 'ember'], function (exports, Ember) {
+
+  'use strict';
+
+  /**
+   * Created by alina on 30.08.15.
+   */
+  exports['default'] = Ember['default'].Controller.extend({
+    queryParams: ['term']
+  });
+
+});
+define('linda-vis-fe/controllers/search', ['ember', 'linda-vis-fe/utils/tree-selection-data-module'], function (Ember, treeselection_data) {
+
+  'use strict';
+
+  /**
+   * Created by alina on 30.08.15.
+   */
+  App.IndexController = Ember['default'].ArrayController.extend({
+    search: "",
+    titleFilter: null,
+    actions: {
+      query: function query() {
+        // the current value of the text field
+        var query = this.get("search");
+        this.set("titleFilter", query);
+      },
+      addNote: function addNote() {
+        this.transitionToRoute("main");
+      }
+    },
+    arrangedContent: (function () {
+      var search = this.get("search");
+      binding = Ember['default'].Binding.from("App.tree-selection.content").to("content");
+      binding.connect(this);
+      if (!search) {
+        return this.get("content");
+      }
+
+      return this.get("content").filter(function (note) {
+        return note.get("title").indexOf(search) != -1;
+      });
+    }).property("content", "titleFilter")
+  });
+
+});
 define('linda-vis-fe/controllers/visconfiguration', ['exports', 'ember'], function (exports, Ember) {
 
 	'use strict';
@@ -454,6 +560,7 @@ define('linda-vis-fe/controllers/visualization', ['exports', 'ember', 'linda-vis
         initializeVisualization: (function () {
             console.log("VISUALIZATION CONTROLLER - INITIALIZE VISUALIZATION ... ");
             this.set("drawnVisualization", null);
+            this.set("isToggled", true);
 
             var selectedVisualization = this.get("selectedVisualization");
             console.log("SELECTED VISUALIZATION");
@@ -556,14 +663,44 @@ define('linda-vis-fe/controllers/visualization', ['exports', 'ember', 'linda-vis
             },
             toggle: function toggle() {
                 var toggled = this.get("isToggled");
-                if (toggled) {
-                    this.set("isToggled", false);
-                } else {
-                    this.set("isToggled", true);
-                }
+                var controller = this;
+                Ember['default'].run(function () {
+                    if (toggled) {
+                        controller.set("isToggled", false);
+                    } else {
+                        controller.set("isToggled", true);
+                    }
+                });
             }
         }
     });
+
+});
+define('linda-vis-fe/helpers/search', ['ember'], function (Ember) {
+
+  'use strict';
+
+  /**
+   * Created by alina on 30.08.15.
+   */
+
+  Ember['default'].Handlebars.helper('autocomplete', Ember['default'].View.extend({
+    templateName: 'controls/autocomplete',
+
+    filteredList: (function () {
+      binding = Ember['default'].Binding.from('App.Data.value').to('content');
+      binding.connect(this);
+      filter = this.get('filter');
+
+      if (!filter) {
+        return content;
+      }
+
+      return list.filter(function (item) {
+        return item.name.indexOf(filter) !== -1;
+      });
+    }).property('list.@each', 'filter')
+  }));
 
 });
 define('linda-vis-fe/initializers/app-version', ['exports', 'linda-vis-fe/config/environment', 'ember'], function (exports, config, Ember) {
@@ -1281,7 +1418,7 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
           dom.setAttribute(el1,"class","glyphicon glyphicon-resize-full");
           dom.setAttribute(el1,"aria-hidden","true");
           dom.appendChild(el0, el1);
-          var el1 = dom.createTextNode(" \n");
+          var el1 = dom.createTextNode("\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -1323,7 +1460,7 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
           dom.setAttribute(el1,"class","glyphicon glyphicon-resize-small");
           dom.setAttribute(el1,"aria-hidden","true");
           dom.appendChild(el0, el1);
-          var el1 = dom.createTextNode(" \n");
+          var el1 = dom.createTextNode("\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -1390,11 +1527,19 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("div");
         dom.setAttribute(el4,"class","panel-body");
+        var el5 = dom.createTextNode("\n              Search: ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createComment("");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n              ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        dom.appendChild(el4, el5);
         var el5 = dom.createTextNode("\n                ");
         dom.appendChild(el4, el5);
         var el5 = dom.createComment("");
         dom.appendChild(el4, el5);
-        var el5 = dom.createTextNode("  \n            ");
+        var el5 = dom.createTextNode("\n            ");
         dom.appendChild(el4, el5);
         dom.appendChild(el3, el4);
         var el4 = dom.createTextNode("\n            ");
@@ -1407,10 +1552,10 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
         var el4 = dom.createTextNode("\n        ");
         dom.appendChild(el3, el4);
         dom.appendChild(el2, el3);
-        var el3 = dom.createTextNode("                                                      \n    ");
+        var el3 = dom.createTextNode("\n    ");
         dom.appendChild(el2, el3);
         dom.appendChild(el1, el2);
-        var el2 = dom.createTextNode("           \n    ");
+        var el2 = dom.createTextNode("\n    ");
         dom.appendChild(el1, el2);
         var el2 = dom.createElement("div");
         var el3 = dom.createTextNode("\n        ");
@@ -1455,7 +1600,7 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
         dom.appendChild(el4, el5);
         var el5 = dom.createComment("");
         dom.appendChild(el4, el5);
-        var el5 = dom.createTextNode(" \n            ");
+        var el5 = dom.createTextNode("\n            ");
         dom.appendChild(el4, el5);
         dom.appendChild(el3, el4);
         var el4 = dom.createTextNode("\n            ");
@@ -1482,7 +1627,7 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
         var el4 = dom.createTextNode("\n        ");
         dom.appendChild(el3, el4);
         dom.appendChild(el2, el3);
-        var el3 = dom.createTextNode("     \n    ");
+        var el3 = dom.createTextNode("\n    ");
         dom.appendChild(el2, el3);
         dom.appendChild(el1, el2);
         var el2 = dom.createTextNode("\n");
@@ -1514,20 +1659,23 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
         }
         var element0 = dom.childAt(fragment, [0]);
         var element1 = dom.childAt(element0, [1]);
-        var element2 = dom.childAt(element0, [3]);
-        var element3 = dom.childAt(element2, [3]);
-        var element4 = dom.childAt(element3, [1, 3]);
-        var element5 = dom.childAt(element3, [5, 1]);
-        var morph0 = dom.createMorphAt(dom.childAt(element1, [3, 3]),1,1);
-        var morph1 = dom.createMorphAt(element4,1,1);
-        var morph2 = dom.createMorphAt(dom.childAt(element3, [3]),1,1);
+        var element2 = dom.childAt(element1, [3, 3]);
+        var element3 = dom.childAt(element0, [3]);
+        var element4 = dom.childAt(element3, [3]);
+        var element5 = dom.childAt(element4, [1, 3]);
+        var element6 = dom.childAt(element4, [5, 1]);
+        var morph0 = dom.createMorphAt(element2,1,1);
+        var morph1 = dom.createMorphAt(element2,5,5);
+        var morph2 = dom.createMorphAt(element5,1,1);
+        var morph3 = dom.createMorphAt(dom.childAt(element4, [3]),1,1);
         element(env, element1, context, "bind-attr", [], {"class": "isToggled:col-md-5:col-md-0"});
-        inline(env, morph0, context, "tree-selection", [], {"treedata": get(env, context, "controller.treeContent"), "selection": get(env, context, "controller.dataSelection")});
-        element(env, element2, context, "bind-attr", [], {"class": "isToggled:col-md-7:col-md-12"});
-        element(env, element4, context, "action", ["toggle"], {});
-        block(env, morph1, context, "if", [get(env, context, "isToggled")], {}, child0, child1);
-        inline(env, morph2, context, "data-table", [], {"preview": get(env, context, "controller.dataSelection"), "datasource": get(env, context, "controller.selectedDatasource")});
-        element(env, element5, context, "action", ["visualize"], {});
+        inline(env, morph0, context, "search-box", [], {"selectRes": "submitSearch", "treedata": get(env, context, "treedata"), "term": get(env, context, "term"), "activeIndex": get(env, context, "activeIndex"), "results": get(env, context, "filteredResults"), "class": "searchField"});
+        inline(env, morph1, context, "tree-selection", [], {"treedata": get(env, context, "controller.treeContent"), "selection": get(env, context, "controller.dataSelection"), "valueBinding": get(env, context, "treedata")});
+        element(env, element3, context, "bind-attr", [], {"class": "isToggled:col-md-7:col-md-12"});
+        element(env, element5, context, "action", ["toggle"], {});
+        block(env, morph2, context, "if", [get(env, context, "isToggled")], {}, child0, child1);
+        inline(env, morph3, context, "data-table", [], {"preview": get(env, context, "controller.dataSelection"), "datasource": get(env, context, "controller.selectedDatasource")});
+        element(env, element6, context, "action", ["visualize"], {});
         return fragment;
       }
     };
@@ -2526,6 +2674,42 @@ define('linda-vis-fe/templates/index', ['exports'], function (exports) {
         }
       };
     }());
+    var child18 = (function() {
+      return {
+        isHTMLBars: true,
+        revision: "Ember@1.11.1",
+        blockParams: 0,
+        cachedFragment: null,
+        hasRendered: false,
+        build: function build(dom) {
+          var el0 = dom.createDocumentFragment();
+          var el1 = dom.createTextNode("		19. Teh test\n");
+          dom.appendChild(el0, el1);
+          return el0;
+        },
+        render: function render(context, env, contextualElement) {
+          var dom = env.dom;
+          dom.detectNamespace(contextualElement);
+          var fragment;
+          if (env.useFragmentCache && dom.canClone) {
+            if (this.cachedFragment === null) {
+              fragment = this.build(dom);
+              if (this.hasRendered) {
+                this.cachedFragment = fragment;
+              } else {
+                this.hasRendered = true;
+              }
+            }
+            if (this.cachedFragment) {
+              fragment = dom.cloneNode(this.cachedFragment, true);
+            }
+          } else {
+            fragment = this.build(dom);
+          }
+          return fragment;
+        }
+      };
+    }());
     return {
       isHTMLBars: true,
       revision: "Ember@1.11.1",
@@ -2725,6 +2909,16 @@ define('linda-vis-fe/templates/index', ['exports'], function (exports) {
         var el4 = dom.createTextNode("        ");
         dom.appendChild(el3, el4);
         dom.appendChild(el2, el3);
+        var el3 = dom.createTextNode("\n	");
+        dom.appendChild(el2, el3);
+        var el3 = dom.createElement("li");
+        var el4 = dom.createTextNode("\n");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createComment("");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("	");
+        dom.appendChild(el3, el4);
+        dom.appendChild(el2, el3);
         var el3 = dom.createTextNode("\n    ");
         dom.appendChild(el2, el3);
         dom.appendChild(el1, el2);
@@ -2774,6 +2968,7 @@ define('linda-vis-fe/templates/index', ['exports'], function (exports) {
         var morph15 = dom.createMorphAt(dom.childAt(element0, [31]),1,1);
         var morph16 = dom.createMorphAt(dom.childAt(element0, [33]),1,1);
         var morph17 = dom.createMorphAt(dom.childAt(element0, [35]),1,1);
+        var morph18 = dom.createMorphAt(dom.childAt(element0, [37]),1,1);
         block(env, morph0, context, "link-to", ["datasource", "DepartmentOfAgriculture-Quick%20Stats", get(env, context, "datasetsEndpointURI"), "http%3A%2F%2Fwww.linda-project.org%2Fexamples%2FDepartmentOfAgriculture-QuickStats.nt", "rdf"], {}, child0, null);
         block(env, morph1, context, "link-to", ["datasource", "DepartmentOfDefense-Marital%20Status", get(env, context, "datasetsEndpointURI"), "http%3A%2F%2Fwww.linda-project.org%2Fexamples%2FDepartmentOfDefense-MaritalStatus.nt", "rdf"], {}, child1, null);
         block(env, morph2, context, "link-to", ["datasource", "DepartmentofHealthandHumanServices-OMHClaims%20Listed%20by%20State", get(env, context, "datasetsEndpointURI"), "http%3A%2F%2Fwww.linda-project.org%2Fexamples%2FDepartmentofHealthandHumanServices-OMHClaimsListedbyState.nt", "rdf"], {}, child2, null);
@@ -2792,6 +2987,7 @@ define('linda-vis-fe/templates/index', ['exports'], function (exports) {
         block(env, morph15, context, "link-to", ["datasource", "Newspaper%20Articles%20Analysis", get(env, context, "datasetsEndpointURI"), "http%3A%2F%2Fnewspaper.org%2Farticles_2007", "rdf"], {}, child15, null);
         block(env, morph16, context, "link-to", ["datasource", "Health Data.gov - Hospital Inpatient Discharges by Facility", get(env, context, "datasetsEndpointURI"), "http%3A%2F%2FHealthData.govHospitalInpatientDischargesbyFacility", "rdf"], {}, child16, null);
         block(env, morph17, context, "link-to", ["datasource", "TS1", get(env, context, "datasetsEndpointURI"), "http%3A//www.linda-project.org/TS1_LinearRegression_Result_Original", "rdf"], {}, child17, null);
+        block(env, morph18, context, "link-to", ["datasource", "test", get(env, context, "datasetsEndpointURI"), "some/test/path", "rdf"], {}, child18, null);
         return fragment;
       }
     };
@@ -4233,7 +4429,7 @@ define('linda-vis-fe/templates/visualization', ['exports'], function (exports) {
         element(env, element5, context, "bind-attr", [], {"class": "isToggled:col-md-7:col-md-12"});
         element(env, element7, context, "action", ["toggle"], {});
         block(env, morph3, context, "if", [get(env, context, "isToggled")], {}, child0, child1);
-        inline(env, morph4, context, "view", ["draw-visualization"], {"id": "visualization", "visualization": get(env, context, "controller.drawnVisualization"), "configurationArray": get(env, context, "controller.visualizationConfiguration")});
+        inline(env, morph4, context, "view", ["draw-visualization"], {"id": "visualization", "visualization": get(env, context, "controller.drawnVisualization"), "configurationArray": get(env, context, "controller.visualizationConfiguration"), "isToggled": get(env, context, "controller.isToggled")});
         inline(env, morph5, context, "partial", ["export-visualization"], {});
         inline(env, morph6, context, "partial", ["save-visualization"], {});
         inline(env, morph7, context, "view", ["visualization-options"], {"options": get(env, context, "controller.layoutOptions"), "config": get(env, context, "controller.visualizationConfiguration")});
@@ -4303,13 +4499,23 @@ define('linda-vis-fe/tests/components/property-item.jshint', function () {
   });
 
 });
+define('linda-vis-fe/tests/components/search-box.jshint', function () {
+
+  'use strict';
+
+  module('JSHint - components');
+  test('components/search-box.js should pass jshint', function() { 
+    ok(true, 'components/search-box.js should pass jshint.'); 
+  });
+
+});
 define('linda-vis-fe/tests/components/tree-selection.jshint', function () {
 
   'use strict';
 
   module('JSHint - components');
   test('components/tree-selection.js should pass jshint', function() { 
-    ok(true, 'components/tree-selection.js should pass jshint.'); 
+    ok(false, 'components/tree-selection.js should pass jshint.\ncomponents/tree-selection.js: line 3, col 5, \'Data\' is defined but never used.\n\n1 error'); 
   });
 
 });
@@ -4330,6 +4536,36 @@ define('linda-vis-fe/tests/controllers/index.jshint', function () {
   module('JSHint - controllers');
   test('controllers/index.js should pass jshint', function() { 
     ok(true, 'controllers/index.js should pass jshint.'); 
+  });
+
+});
+define('linda-vis-fe/tests/controllers/main.jshint', function () {
+
+  'use strict';
+
+  module('JSHint - controllers');
+  test('controllers/main.js should pass jshint', function() { 
+    ok(true, 'controllers/main.js should pass jshint.'); 
+  });
+
+});
+define('linda-vis-fe/tests/controllers/results.jshint', function () {
+
+  'use strict';
+
+  module('JSHint - controllers');
+  test('controllers/results.js should pass jshint', function() { 
+    ok(true, 'controllers/results.js should pass jshint.'); 
+  });
+
+});
+define('linda-vis-fe/tests/controllers/search.jshint', function () {
+
+  'use strict';
+
+  module('JSHint - controllers');
+  test('controllers/search.js should pass jshint', function() { 
+    ok(false, 'controllers/search.js should pass jshint.\ncontrollers/search.js: line 24, col 46, Missing semicolon.\ncontrollers/search.js: line 27, col 50, Expected \'!==\' and instead saw \'!=\'.\ncontrollers/search.js: line 28, col 7, Missing semicolon.\ncontrollers/search.js: line 7, col 1, \'App\' is not defined.\ncontrollers/search.js: line 22, col 5, \'binding\' is not defined.\ncontrollers/search.js: line 23, col 5, \'binding\' is not defined.\ncontrollers/search.js: line 5, col 8, \'treeselection_data\' is defined but never used.\n\n7 errors'); 
   });
 
 });
@@ -4374,6 +4610,16 @@ define('linda-vis-fe/tests/helpers/resolver.jshint', function () {
   module('JSHint - helpers');
   test('helpers/resolver.js should pass jshint', function() { 
     ok(true, 'helpers/resolver.js should pass jshint.'); 
+  });
+
+});
+define('linda-vis-fe/tests/helpers/search.jshint', function () {
+
+  'use strict';
+
+  module('JSHint - helpers');
+  test('helpers/search.js should pass jshint', function() { 
+    ok(false, 'helpers/search.js should pass jshint.\nhelpers/search.js: line 11, col 5, \'binding\' is not defined.\nhelpers/search.js: line 12, col 5, \'binding\' is not defined.\nhelpers/search.js: line 13, col 7, \'filter\' is not defined.\nhelpers/search.js: line 15, col 10, \'filter\' is not defined.\nhelpers/search.js: line 15, col 27, \'content\' is not defined.\nhelpers/search.js: line 17, col 12, \'list\' is not defined.\nhelpers/search.js: line 18, col 32, \'filter\' is not defined.\n\n7 errors'); 
   });
 
 });
@@ -4794,6 +5040,11 @@ define('linda-vis-fe/utils/area-chart', ['exports', 'linda-vis-fe/utils/util', '
                 }
 
                 chart.draw();
+
+                //prevent overlapping if there are more than 25 ticks
+                if (x.shapes.selectAll("text")[0].length > 25) {
+                    util['default'].cleanAxis(x, 5);
+                }
             });
         }
 
@@ -5035,8 +5286,8 @@ define('linda-vis-fe/utils/column-chart', ['exports', 'linda-vis-fe/utils/util',
                     measureAxis = "y";
                 }
 
-                var dim1 = chart.addCategoryAxis(categoryAxis, seriesHeaders.slice(1, 1 + xAxis.length + group.length)); // x axis: more categories       
-                var dim2 = chart.addMeasureAxis(measureAxis, seriesHeaders[0]); // y axis: one measure (scale)                      
+                var dim1 = chart.addCategoryAxis(categoryAxis, seriesHeaders.slice(1, 1 + xAxis.length + group.length)); // x axis: more categories
+                var dim2 = chart.addMeasureAxis(measureAxis, seriesHeaders[0]); // y axis: one measure (scale)
 
                 if (group.length > 0) {
                     // simple column groups
@@ -5064,6 +5315,11 @@ define('linda-vis-fe/utils/column-chart', ['exports', 'linda-vis-fe/utils/util',
                 }
 
                 chart.draw();
+
+                //prevent overlapping if there are more than 25 ticks
+                if (dim1.shapes.selectAll("text")[0].length > 25) {
+                    util['default'].cleanAxis(dim1, 5);
+                }
             });
         }
 
@@ -5360,7 +5616,7 @@ define('linda-vis-fe/utils/line-chart', ['exports', 'linda-vis-fe/utils/util', '
                 var chart = new dimple.chart(svg, data);
 
                 var x = chart.addCategoryAxis("x", columnsHeaders[1]); // x axis: ordinal values
-                var y = chart.addMeasureAxis("y", columnsHeaders[0]); // y axis: one measure (scale) 
+                var y = chart.addMeasureAxis("y", columnsHeaders[0]); // y axis: one measure (scale)
 
                 var series = null;
 
@@ -5386,12 +5642,18 @@ define('linda-vis-fe/utils/line-chart', ['exports', 'linda-vis-fe/utils/util', '
                 //ticks
                 x.ticks = selection.gridlines;
                 y.ticks = selection.gridlines;
+
                 //tooltip
                 if (selection.tooltip === false) {
                     chart.addSeries(series, dimple.plot.line).addEventHandler("mouseover", function () {});
                 }
 
                 chart.draw();
+
+                //prevent overlapping if there are more than 25 ticks
+                if (x.shapes.selectAll("text")[0].length > 25) {
+                    util['default'].cleanAxis(x, 5);
+                }
             });
         }
 
@@ -6263,7 +6525,7 @@ define('linda-vis-fe/utils/sparql-data-module', ['exports', 'ember', 'linda-vis-
                         // No idea what this is, maybe JavaScript knows...
                         yearDateString = value;
                     }
-                    return new Date(yearDateString);
+                    return new Date(yearDateString).getFullYear();
                 case "http://www.w3.org/2001/XMLSchema#gYearMonth":
                     var twoNumbersWithHyphenRegex = /\d+-\d+/;
                     var firstTwoNumbers = twoNumbersWithHyphenRegex.exec(value);
@@ -6273,7 +6535,9 @@ define('linda-vis-fe/utils/sparql-data-module', ['exports', 'ember', 'linda-vis-
                     } else {
                         yearMonthDateString = value;
                     }
-                    return new Date(yearMonthDateString);
+                    //prevent long strings
+                    yearMonthDateString = Date(yearMonthDateString);
+                    return yearMonthDateString.getFullYear() + "-" + (yearMonthDateString.getMonth() + 1);
                 case "http://www.w3.org/2001/XMLSchema#dateTime":
                 case "http://www.w3.org/2001/XMLSchema#date":
                     return new Date(value);
@@ -6743,11 +7007,34 @@ define('linda-vis-fe/utils/util', ['exports'], function (exports) {
             return "Nominal";
         }
 
+        var cleanAxis = function cleanAxis(axis, interval) {
+            if (axis.shapes.length > 0) {
+                //first tick
+                var del = 0;
+                if (interval > 1) {
+                    axis.shapes.selectAll("text").each(function (d) {
+                        //remove all but nth label
+                        if (del % interval !== 0) {
+                            this.remove();
+                            //delete a corresponding tick
+                            axis.shapes.selectAll("line").each(function (d2) {
+                                if (d === d2) {
+                                    this.remove();
+                                }
+                            });
+                        }
+                        del += 1;
+                    });
+                }
+            }
+        };
+
         return {
             predictValueSOM: predictValueSOM,
             toScalar: toScalar,
             transpose: transpose,
-            createRows: createRows
+            createRows: createRows,
+            cleanAxis: cleanAxis
         };
     })();
 
@@ -6864,7 +7151,17 @@ define('linda-vis-fe/views/draw-visualization', ['exports', 'ember', 'linda-vis-
                 console.log(ex);
             }
         }).observes("configurationArray.@each").on("didInsertElement"),
-        redraw: (function () {}).observes("visualization")
+        redraw: (function () {}).observes("visualization"),
+        resize: (function () {
+            //get the controller
+            var self = this;
+
+            //run asynchronous code to ensure that DOM has been changed before rerendering
+            //time window = 500 ms
+            Ember['default'].run.later(function () {
+                self.rerender();
+            }, 500);
+        }).observes("isToggled")
     });
 
     //this.rerender();
@@ -6996,7 +7293,7 @@ catch(err) {
 if (runningTests) {
   require("linda-vis-fe/tests/test-helper");
 } else {
-  require("linda-vis-fe/app")["default"].create({"name":"linda-vis-fe","version":"0.0.0.b0537671"});
+  require("linda-vis-fe/app")["default"].create({"name":"linda-vis-fe","version":"0.0.0.540633f8"});
 }
 
 /* jshint ignore:end */
