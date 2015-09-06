@@ -6,7 +6,7 @@
                 <h1 class="panel-title pull-left">Explore and Select Data</h1>
             </div>
             <div class="panel-body">
-              Search: {{search-box selectRes='submitSearch' treedata=controller.treeContent term=term activeIndex=activeIndex results=filteredResults class="searchField"}}
+              Search: {{search-box treedata=controller.treeContent term=controller.term}}
               <p></p>
                 {{tree-selection treedata=controller.treeContent selection=controller.dataSelection valueBinding=treedata}}
             </div>

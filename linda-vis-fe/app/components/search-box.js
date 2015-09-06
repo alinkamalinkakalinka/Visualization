@@ -2,7 +2,6 @@
  * Created by alina on 30.08.15. treedata or content???? how to bind???
  */
 import Ember from 'ember';
-import treeselection_data from "../utils/tree-selection-data-module";
 
 export default Ember.TextField.extend({
   placeholder: 'keyword',

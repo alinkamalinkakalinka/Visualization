@@ -54,6 +54,28 @@ var treeselection_data_module = function() {
         });
     }
 
+  /** SEARCH**/
+
+  function search(dataInfo, term) {
+    console.log('SELECTION TREE COMPONENT - SEARCH KEYWORD');
+
+    _location = dataInfo.location;
+    _graph = dataInfo.graph;
+    _format = dataInfo.format;
+    _data_module = getDataModule(_format);
+
+    return _data_module.queryClasses(_location, _graph).then(function (classes) {
+      var treecontent = createTreeContent(classes);
+      var term = this.get('term');
+      if (!term) {
+        return treecontent
+      } else {return treecontent.filter(function (item) {
+          return item.name.indexOf(term) !== -1;
+        });
+      }
+    });
+  }
+
     function restoreTreeContent(previousSelection, branch) {
         console.log('SELECTION TREE COMPONENT - RESTORING TREE CONTENT');
 
@@ -155,7 +177,7 @@ var treeselection_data_module = function() {
                 datatype: record.datatype
             });
         }
- 
+
         return dataSelection;
     }
 
@@ -179,7 +201,7 @@ var treeselection_data_module = function() {
         console.error("Unknown type of record  '" + record + "'");
         return null;
     }
-    
+
     function getDataType(record) {
         switch (record) {
             case "Ratio":
@@ -189,16 +211,16 @@ var treeselection_data_module = function() {
             case "Ordinal":
                 return 'Ordinal';
             case "Nominal":
-                return 'String';  
+                return 'String';
             case "Angular":
-                return 'Angle';  
+                return 'Angle';
             case "Geographic Latitude":
             case "Geographic Longitude":
                 return 'Spatial';
             case "Class":
             case "Resource":
-            case "Nothing": 
-                return null;           
+            case "Nothing":
+                return null;
         }
         console.error("Unknown data type of record  '" + record + "'");
         return null;

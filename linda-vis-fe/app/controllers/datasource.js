@@ -9,16 +9,16 @@ export default Ember.Controller.extend({
         if (!dataInfo){
 	  return{};
         }
-            
+
         this.set('selectedDatasource', dataInfo);
-     
+        var term = this.get('term');
         var previousSelection = this.get('previousSelection');
         if (previousSelection.length === 0) {
             return treeselection_data.initialize(dataInfo);
         } else {
             return treeselection_data.restore(dataInfo, previousSelection);
         }
-    }.property('model', 'previousSelection'),
+    }.property('model', 'previousSelection', 'term'), /** SEARCH **/
     previousSelection: [],
     dataSelection: [],
     selectedDatasource: null,
