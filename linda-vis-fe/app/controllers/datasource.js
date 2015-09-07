@@ -45,10 +45,14 @@ console.log('VISUALIZE');
         var term = this.get('term');
         var dataInfo = this.get('model');
         this.get('searchResults');
-        searchResults = treeselection_data.search(dataInfo, term);
+        results = treeselection_data.search(dataInfo, term);
         this.set('searchResults', results);
         console.log('SEARCH RESULTS');
         console.dir(results);
+        treeselection_data.initialize(search);
+        return treeselection_data.initialize(dataInfo);
+        return treeselection_data.restore(dataInfo, previousSelection);
+
       },
         toggle: function() {
             var toggled = this.get('isToggled');
