@@ -46,12 +46,18 @@ console.log('VISUALIZE');
         var previousSelection = this.get('previousSelection');
         var searchResults = this.get('searchResults');
         var results = this.get('results')
+        console.dir(this)
         results = treeselection_data.search(dataInfo, term);
         this.set('searchResults', results);
         console.log('SEARCH RESULTS');
         console.dir(results);
         treeselection_data.search(dataInfo, term);
-        return treeselection_data.restore(dataInfo, previousSelection);
+        return {
+          initialize: initialize,
+          restore: restore,
+          getDataSelection: getDataSelection
+        };
+
 
       },
         toggle: function() {
