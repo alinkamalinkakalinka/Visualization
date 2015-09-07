@@ -12,7 +12,6 @@ export default Ember.Controller.extend({
 
         this.set('selectedDatasource', dataInfo);
       var searchResults = this.get('searchResults');
-      console.log(this.get(term));
         var previousSelection = this.get('previousSelection');
         if (previousSelection.length === 0) {
             return treeselection_data.initialize(dataInfo);
@@ -44,13 +43,14 @@ console.log('VISUALIZE');
       search: function() {
         var term = this.get('term');
         var dataInfo = this.get('model');
-        this.get('searchResults');
+        var previousSelection = this.get('previousSelection');
+        var searchResults = this.get('searchResults');
+        var results = this.get('results')
         results = treeselection_data.search(dataInfo, term);
         this.set('searchResults', results);
         console.log('SEARCH RESULTS');
         console.dir(results);
-        treeselection_data.initialize(search);
-        return treeselection_data.initialize(dataInfo);
+        treeselection_data.search(dataInfo, term);
         return treeselection_data.restore(dataInfo, previousSelection);
 
       },
