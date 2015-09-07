@@ -43,9 +43,11 @@ console.log('VISUALIZE');
         },
       search: function() {
         var term = this.get('term');
+        var dataInfo = this.get('model');
+        var searchResults = this.get('searchResults');
         searchResults = treeselection_data.search(dataInfo, term);
-        return searchResults;
         console.log('SEARCH RESULTS');
+        return searchResults;
       },
         toggle: function() {
             var toggled = this.get('isToggled');

@@ -68,7 +68,7 @@ var treeselection_data_module = function() {
       var treecontent = createTreeContent(classes);
       var term = this.get('term');
       if (!term) {
-        return treecontent
+        return treecontent;
       } else {return treecontent.filter(function (item) {
           return item.name.indexOf(term) !== -1;
         });
