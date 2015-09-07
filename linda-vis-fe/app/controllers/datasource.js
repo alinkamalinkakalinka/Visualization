@@ -11,14 +11,16 @@ export default Ember.Controller.extend({
         }
 
         this.set('selectedDatasource', dataInfo);
-        var term = this.get('term');
+      var term = this.get('term');
+      var searchResults = this.get('searchResults');
+      console.log(this.get(term));
         var previousSelection = this.get('previousSelection');
         if (previousSelection.length === 0) {
             return treeselection_data.initialize(dataInfo);
         } else {
             return treeselection_data.restore(dataInfo, previousSelection);
         }
-    }.property('model', 'previousSelection', 'term'), /** SEARCH **/
+    }.property('model', 'previousSelection', 'searchResults'), /** SEARCH **/
     previousSelection: [],
     dataSelection: [],
     selectedDatasource: null,
@@ -39,6 +41,12 @@ console.log('VISUALIZE');
                 self.transitionToRoute('visualization', 'dataselection', responseDataselection.id);
             });
         },
+      search: function() {
+        var term = this.get('term');
+        searchResults = treeselection_data.search(dataInfo, term);
+        return searchResults;
+        console.log('SEARCH RESULTS');
+      },
         toggle: function() {
             var toggled = this.get('isToggled');
             if (toggled) {
