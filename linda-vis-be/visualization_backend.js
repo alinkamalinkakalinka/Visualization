@@ -1,8 +1,5 @@
 var http = require('http');
-//var GraphStoreClient = require('graph-store-client');
-var SparqlClient = require('sparql-client');
-var util = require('util');
-
+var GraphStoreClient = require('graph-store-client');
 var express = require('express');
 var store_visualization = require('./visualization_modules/store_visualization_config.js');
 var query_visualization = require('./visualization_modules/query_visualization_config.js');
@@ -20,7 +17,7 @@ var printError = function (error) {
 var allowCrossDomain = function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
 
     next();
 };
@@ -103,32 +100,18 @@ app.get('/datasources/:id', function (req, res) {
 app.get('/sparql-proxy/:endpoint/:query', function (req, res) {
     var query = req.param("query");
     var endpoint = req.param("endpoint");
-    //var client = new GraphStoreClient(endpoint, null);
-    var client= new SparqlClient(endpoint);
+    var client = new GraphStoreClient(endpoint, null);
 
-    console.log("Querying " + endpoint);
-    console.dir(client);
+    client.query(query).then(function (result, err) {
+        if (err) {
+            console.log('visualization_backend: Could not execute query: ' + err);
+            return;
+        }
+        // console.log("SPARQL_RESULT");
+        // console.dir(result);
 
-
-    client.query(query).execute(function(error, results) {
-        process.stdout.write(util.inspect(arguments, null, 20, true)+"\n");
-
-        res.send(results.results.bindings);
-    });
-
-
-    /*client.query(query).then(function (result, err) {
-    if (err) {
-        console.log('visualization_backend: Could not execute query: ' + err);
-        return;
-    }
-    console.log("SPARQL_RESULT");
-    console.dir(result);
-
-    res.send(result);
-}, printError);*/
-
-
+        res.send(result);
+    }, printError);
 });
 
 

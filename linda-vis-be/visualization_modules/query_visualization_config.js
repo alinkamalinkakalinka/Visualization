@@ -1,4 +1,4 @@
-//var GraphStoreClient = require('graph-store-client');
+var GraphStoreClient = require('graph-store-client');
 var _ = require('lodash');
 var Q = require('q');
 Q.longStackSupport = true;

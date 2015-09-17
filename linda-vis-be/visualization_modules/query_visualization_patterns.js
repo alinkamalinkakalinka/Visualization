@@ -1,4 +1,4 @@
-//var GraphStoreClient = require('graph-store-client');
+var GraphStoreClient = require('graph-store-client');
 var _ = require('lodash');
 
 function query(ontology_graph, ontology_endpoint) {
