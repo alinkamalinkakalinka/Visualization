@@ -55,10 +55,9 @@ console.log('VISUALIZE');
         return {
           initialize: initialize,
           restore: restore,
-          getDataSelection: getDataSelection
+          getDataSelection: getDataSelection,
+          search: search
         };
-
-
       },
         toggle: function() {
             var toggled = this.get('isToggled');

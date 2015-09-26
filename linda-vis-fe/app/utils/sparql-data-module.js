@@ -17,7 +17,140 @@ var sparql_data_module = function () {
         var splits = uri.split(/[#/:]/);
         return splits[splits.length - 1];
     }
+    function fullTextSearch(endpoint, graph, term) {
+      var query = "";
 
+      query += 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>';
+      query += 'PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>';
+
+      query += 'SELECT ?class ?property';
+      query += 'WHERE';
+      query += '{';
+      query += ' GRAPH <' + graph + '>';
+      query += ' {';
+      query += '   {';
+      query += '    ?x ?property ?literal .';
+      query += '    ?x a ?class .';
+      query += '    ?class rdfs:label ?propertyLabel .';
+      query += '    ?propertyLabel bif:contains ?term . ';
+      query += '   }';
+      query += '   UNION';
+      query += '   {';
+      query += '    ?x ?property ?literal .';
+      query += '    ?x a ?class .';
+      query += '    ?class rdfs:label ?classLabel .';
+      query += '    ?classLabel bif:contains ?term .';
+      query += '   }';
+      query += '   UNION';
+      query += '   {';
+      query += '    ?x ?property ?literal .';
+      query += '    ?x a ?class .';
+      query += '    ?property ?property1 ?literal .';
+      query += '    ?property rdfs:label ?property1Label .';
+      query += '    ?property1Label bif:contains ?term .';
+      query += '   }';
+      query += '   UNION';
+      query += '   {';
+      query += '    ?x ?property ?literal .';
+      query += '    ?x a ?class .';
+      query += '    ?property ?property1 ?literal .';
+      query += '    ?property1 ?property2 ?literal .';
+      query += '    ?property1 rdfs:label ?property2Label .';
+      query += '    ?property2Label bif:contains ?term .';
+      query += '   }';
+      query += ' }';
+      query += '}';
+
+      console.log("SPARQL DATA MODULE - FULL TEXT SERCH");
+      console.dir(query);
+
+      return sparqlProxyQuery(endpoint, query).then(function (result) {
+        var classes = [];
+        var properties = [];
+        var properties1 = [];
+        var properties2 = [];
+
+        for (var i = 0; i < result.length; i++) {
+          var classURI = result[i].class.value;
+
+          var classLabel = (result[i].classLabel || {}).value;
+          if (!classLabel) {
+            classLabel = simplifyURI(classURI);
+          }
+
+          var dataInfo = {
+            id: classURI,
+            label: classLabel,
+            type: "Class",
+            grandchildren: true
+          };
+
+          classes.push(dataInfo);
+
+        }
+
+          for (var i = 0; i < result.length; i++) {
+            var propertyURI = result[i].property.value;
+
+            var propertyLabel = (result[i].propertyLabel || {}).value;
+            if (!propertyLabel) {
+              propertyLabel = simplifyURI(propertyURI);
+            }
+
+            var dataInfo0 = {
+              id: propertyURI,
+              label: propertyLabel,
+              type: "Property",
+              grandchildren: true
+            };
+
+            properties.push(dataInfo0);
+
+          }
+
+            for (var i = 0; i < result.length; i++) {
+              var property1URI = result[i].property1.value;
+
+              var property1Label = (result[i].property1Label || {}).value;
+              if (!property1Label) {
+                property1Label = simplifyURI(property1URI);
+              }
+
+              var dataInfo1 = {
+                id: property1URI,
+                label: property1Label,
+                type: "Property1",
+                grandchildren: true
+              };
+
+              properties1.push(dataInfo1);
+
+            }
+
+              for (var i = 0; i < result.length; i++) {
+                var property2URI = result[i].property2.value;
+
+                var property2Label = (result[i].property2Label || {}).value;
+                if (!property2Label) {
+                  property2Label = simplifyURI(property2URI);
+                }
+
+          var dataInfo2 = {
+            id: property2URI,
+            label: property2Label,
+            type: "Property2",
+            grandchildren: true
+          };
+
+          properties2.push(dataInfo2);
+
+        }
+        return classes;
+        return properties;
+        return properties1;
+        return properties2;
+      });
+    }
     function queryClasses(endpoint, graph) {
         var query = "";
 
@@ -69,6 +202,8 @@ var sparql_data_module = function () {
             return classes;
         });
     }
+
+
 
     function predictRDFPropertyRole(propertyURI, propertyTypes) {
         switch (propertyURI) {
@@ -154,7 +289,7 @@ var sparql_data_module = function () {
                     case "literal":
                     case "typed-literal":
                         scaleOfMeasurement = predictRDFPropertySOM(propertyURI);
-                        
+
                         if(!scaleOfMeasurement) {
                         var datatype = result.sampleValue.datatype;
                         if (datatype) {
@@ -182,7 +317,7 @@ var sparql_data_module = function () {
                     special: _.contains(propertyTypes, "http://linda-project.eu/linda-visualization#SpecialProperty"),
                     type: scaleOfMeasurement
                 };
-                
+
                 properties.push(dataInfo);
             }
 
@@ -192,7 +327,7 @@ var sparql_data_module = function () {
 
     function predictRDFPropertySOM(propertyURI) {
         switch(propertyURI) {
-            case  "http://www.w3.org/2003/01/geo/wgs84_pos#lat": 
+            case  "http://www.w3.org/2003/01/geo/wgs84_pos#lat":
                return "Geographic Latitude";
             case "http://www.w3.org/2003/01/geo/wgs84_pos#long":
                 return "Geographic Longitude";
@@ -234,7 +369,7 @@ var sparql_data_module = function () {
     function parse(endpoint, graph, selection) {
         var dimension = selection.dimension;
         var multidimension = selection.multidimension;
-       
+
         return queryInstances(endpoint, graph, dimension.concat(multidimension));
     }
 
@@ -337,8 +472,8 @@ var sparql_data_module = function () {
                     if(typeof(parsedValue) !== 'undefined') {
                         return parsedValue;
                     }
-                } 
-                
+                }
+
                 // if no (known) datatype is given, try same parsing algorithm as for CSV
                 return util.toScalar(value);
             case "uri":
@@ -396,7 +531,7 @@ var sparql_data_module = function () {
             case "http://www.w3.org/2001/XMLSchema#date":
                 return new Date(value);
             case "http://www.w3.org/2001/XMLSchema#string":
-                // Can plain literals be returned as xsd:string in newer 
+                // Can plain literals be returned as xsd:string in newer
                 // versions of RDF/SPARQL? If so, uses toScalar here to handle
                 // datasets with missing types
                 return value;

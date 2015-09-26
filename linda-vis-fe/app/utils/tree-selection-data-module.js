@@ -64,7 +64,7 @@ var treeselection_data_module = function() {
     _format = dataInfo.format;
     _data_module = getDataModule(_format);
 
-    return _data_module.queryClasses(_location, _graph).then(function (classes) {
+    return _data_module.fullTextSearch(_location, _graph).then(function (classes) {
       var treecontent = createTreeContent(classes);
       var term = this.get('term');
       if (!term) {
