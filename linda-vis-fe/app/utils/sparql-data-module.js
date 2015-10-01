@@ -23,45 +23,58 @@ var sparql_data_module = function () {
       query += 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>';
       query += 'PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>';
 
-      query += 'SELECT ?class ?property';
-      query += 'WHERE';
-      query += '{';
+      query += 'SELECT DISTINCT ?class ?property ?subproperty';
+      query += 'WHERE ';
+      query += '{ ';
       query += ' GRAPH <' + graph + '>';
       query += ' {';
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
-      query += '    ?class rdfs:label ?propertyLabel .';
-      query += '    ?propertyLabel bif:contains ?term . ';
+      query += '    ?property rdfs:label ?propertyLabel .';
+      query += '    ?propertyLabel bif:contains "' + term + '" . ';
       query += '   }';
       query += '   UNION';
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
       query += '    ?class rdfs:label ?classLabel .';
-      query += '    ?classLabel bif:contains ?term .';
+      query += '    ?classLabel bif:contains "' + term + '" .';
       query += '   }';
       query += '   UNION';
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
-      query += '    ?property ?property1 ?literal .';
-      query += '    ?property rdfs:label ?property1Label .';
-      query += '    ?property1Label bif:contains ?term .';
+      query += '    ?x rdfs:label ?instanceLabel .';
+      query += '    ?instanceLabel bif:contains "' + term + '" .';
       query += '   }';
       query += '   UNION';
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
-      query += '    ?property ?property1 ?literal .';
-      query += '    ?property1 ?property2 ?literal .';
-      query += '    ?property1 rdfs:label ?property2Label .';
-      query += '    ?property2Label bif:contains ?term .';
+      query += '    ?literal rdfs:label ?instanceLabel .';
+      query += '    ?instanceLabel bif:contains "' + term + '" .';
+      query += '   }';
+      query += '   UNION';
+      query += '   {';
+      query += '    ?x ?property ?literal .';
+      query += '    ?x a ?class .';
+      query += '    ?literal ?subproperty ?y .';
+      query += '    ?y rdfs:label ?instanceLabel .';
+      query += '    ?instanceLabel bif:contains "' + term + '" .';
+      query += '   }';
+      query += '   UNION';
+      query += '   {';
+      query += '    ?x ?property ?literal .';
+      query += '    ?x a ?class .';
+      query += '    ?literal ?subproperty ?y .';
+      query += '    ?subproperty rdfs:label ?instanceLabel .';
+      query += '    ?instanceLabel bif:contains "' + term + '" .';
       query += '   }';
       query += ' }';
       query += '}';
 
-      console.log("SPARQL DATA MODULE - FULL TEXT SERCH");
+      console.log("SPARQL DATA MODULE - FULL TEXT SEARCH");
       console.dir(query);
 
       return sparqlProxyQuery(endpoint, query).then(function (result) {
@@ -109,46 +122,27 @@ var sparql_data_module = function () {
           }
 
             for (var i = 0; i < result.length; i++) {
-              var property1URI = result[i].property1.value;
+              var subpropertyURI = result[i].subproperty.value;
 
-              var property1Label = (result[i].property1Label || {}).value;
-              if (!property1Label) {
-                property1Label = simplifyURI(property1URI);
+              var subpropertyLabel = (result[i].subpropertyLabel || {}).value;
+              if (!subpropertyLabel) {
+                subpropertyLabel = simplifyURI(subpropertyURI);
               }
 
               var dataInfo1 = {
-                id: property1URI,
-                label: property1Label,
-                type: "Property1",
+                id: subpropertyURI,
+                label: subpropertyLabel,
+                type: "Subproperty",
                 grandchildren: true
               };
 
-              properties1.push(dataInfo1);
+              subproperties.push(dataInfo1);
 
             }
 
-              for (var i = 0; i < result.length; i++) {
-                var property2URI = result[i].property2.value;
-
-                var property2Label = (result[i].property2Label || {}).value;
-                if (!property2Label) {
-                  property2Label = simplifyURI(property2URI);
-                }
-
-          var dataInfo2 = {
-            id: property2URI,
-            label: property2Label,
-            type: "Property2",
-            grandchildren: true
-          };
-
-          properties2.push(dataInfo2);
-
-        }
         return classes;
         return properties;
-        return properties1;
-        return properties2;
+        return subproperties;
       });
     }
     function queryClasses(endpoint, graph) {
@@ -544,6 +538,7 @@ var sparql_data_module = function () {
         queryClasses: queryClasses,
         queryProperties: queryProperties,
         queryInstances: queryInstances,
+        fullTextSearch: fullTextSearch,
         parse: parse
     };
 }();

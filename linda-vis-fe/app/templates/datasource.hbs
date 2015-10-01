@@ -6,12 +6,16 @@
                 <h1 class="panel-title pull-left">Explore and Select Data</h1>
             </div>
             <div class="panel-body">
-              {{search-box treedata=controller.treeContent term=controller.term valueBinding=treedata}}
-                <button type="button" class="btn btn-default" {{action 'search'}}>
-                    <span aria-hidden="true"></span>   Search
-                </button>
+                <!-- NOTE: Why treedata=controller.treeContent and valueBinding=treedata? -->
+              {{! search-box treedata=controller.treeContent term=controller.term valueBinding=treedata}}
+              {{search-box term=controller.term}}
+              <button type="button" class="btn btn-default" {{action 'search'}}>
+                  <!-- NOTE: Why the span and the aria-hidden attribute? -->
+                  <span aria-hidden="true"></span> Search
+              </button>
               <p></p>
-                {{tree-selection treedata=controller.treeContent selection=controller.dataSelection valueBinding=treedata}}
+              <!-- NOTE: Why valueBinding=treedata? I dont see any use of this in tree-selection.js -->
+              {{tree-selection treedata=controller.treeContent selection=controller.dataSelection valueBinding=treedata}}
             </div>
             <div class="panel-footer clearfix">
             </div>
@@ -24,20 +28,20 @@
                 <h1 class="panel-title pull-left">Preview Data Selection</h1>
 
                 <button type="button" class="btn btn-default btn-xs pull-right" {{action 'toggle'}}>
-                    {{#if isToggled}}
-                    <span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span>
-                    {{else}}
-                    <span class="glyphicon glyphicon-resize-small" aria-hidden="true"></span>
-                    {{/if}}
+                  {{#if isToggled}}
+                      <span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span>
+                  {{else}}
+                      <span class="glyphicon glyphicon-resize-small" aria-hidden="true"></span>
+                  {{/if}}
                 </button>
 
             </div>
             <div class="panel-body">
-                {{data-table preview=controller.dataSelection datasource=controller.selectedDatasource}}
+              {{data-table preview=controller.dataSelection datasource=controller.selectedDatasource}}
             </div>
             <div class="panel-footer clearfix">
                 <button type="button" class="btn btn-default pull-right" {{action 'visualize'}}>
-                    <span class="glyphicon glyphicon-stats" aria-hidden="true"></span>   Visualize
+                    <span class="glyphicon glyphicon-stats" aria-hidden="true"></span> Visualize
                 </button>
             </div>
         </div>
