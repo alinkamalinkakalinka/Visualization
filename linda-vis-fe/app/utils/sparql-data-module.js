@@ -80,8 +80,7 @@ var sparql_data_module = function () {
       return sparqlProxyQuery(endpoint, query).then(function (result) {
         var classes = [];
         var properties = [];
-        var properties1 = [];
-        var properties2 = [];
+        var subproperties = [];
 
         for (var i = 0; i < result.length; i++) {
           var classURI = result[i].class.value;
