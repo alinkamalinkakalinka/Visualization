@@ -22,17 +22,16 @@ var sparql_data_module = function () {
 
       query += 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>';
       query += 'PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>';
-
       query += 'SELECT DISTINCT ?class ?property ?subproperty';
-      query += 'WHERE ';
-      query += '{ ';
+      query += ' WHERE ';
+      query += '{';
       query += ' GRAPH <' + graph + '>';
       query += ' {';
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
       query += '    ?property rdfs:label ?propertyLabel .';
-      query += '    ?propertyLabel bif:contains "' + term + '" . ';
+      query += '    ?propertyLabel bif:contains "' + term + '" .';
       query += '   }';
       query += '   UNION';
       query += '   {';
@@ -76,72 +75,122 @@ var sparql_data_module = function () {
 
       console.log("SPARQL DATA MODULE - FULL TEXT SEARCH");
       console.dir(query);
+      console.dir(term);
 
       return sparqlProxyQuery(endpoint, query).then(function (result) {
-        var classes = [];
-        var properties = [];
-        var subproperties = [];
+        console.log("FULL TEXT SPARQL RESULT");
+        console.dir(result);
 
         for (var i = 0; i < result.length; i++) {
+
           var classURI = result[i].class.value;
+          var propertyURI = result[i].property.value;
+          var subpropertyURI = result[i].property.value;
 
           var classLabel = (result[i].classLabel || {}).value;
-          if (!classLabel) {
-            classLabel = simplifyURI(classURI);
+          var propertyLabel = (result[i].propertyLabel || {}).value;
+          var subpropertyLabel = (result[i].propertyLabel || {}).value;
+
+          var propertyTypesString = (result[i].propertyTypes || {}).value;
+          var propertyTypes;
+          if (propertyTypesString) {
+            propertyTypes = propertyTypesString.split(' ');
+          } else {
+            propertyTypes = [];
           }
 
-          var dataInfo = {
-            id: classURI,
-            label: classLabel,
-            type: "Class",
-            grandchildren: true
-          };
+          var result_treedata = [
+            {
+              id: classURI,
+              label: classLabel,
+              type: "Class",
+              children: [
+                {
+                  id: propertyURI,
+                  label: propertyLabel,
+                  role: predictRDFPropertyRole(propertyURI, propertyTypes),
+                  special: false,
+                  type: "Ratio",
+                  children: []
+                }, {
+                  id: propertyURI,
+                  label: propertyLabel,
+                  role: predictRDFPropertyRole(propertyURI, propertyTypes),
+                  special: false,
+                  type: "Interval",
+                  children: []
+                }, {
+                  id: propertyURI,
+                  label: propertyLabel,
+                  role: predictRDFPropertyRole(propertyURI, propertyTypes),
+                  special: false,
+                  type: "Resource",
+                  children: [
+                    {
+                      id: subpropertyURI,
+                      label: subpropertyLabel,
+                      role: predictRDFPropertyRole(subpropertyURI, ["http://purl.org/linked-data/cube#MeasureProperty"]),
+                      special: false,
+                      type: "Ratio",
+                      children: []
+                    }, {
+                      id: subpropertyURI,
+                      label: subpropertyLabel,
+                      role: predictRDFPropertyRole(subpropertyURI, ["http://purl.org/linked-data/cube#DimensionProperty"]),
+                      special: false,
+                      type: "Interval",
+                      children: []
+                    }
+                  ]
+                }
+              ]
+            }
+          ];
 
-          classes.push(dataInfo);
 
         }
+        console.log("SEARCH RESULT");
+        console.dir(result_treedata);
 
-          for (var i = 0; i < result.length; i++) {
-            var propertyURI = result[i].property.value;
 
-            var propertyLabel = (result[i].propertyLabel || {}).value;
-            if (!propertyLabel) {
-              propertyLabel = simplifyURI(propertyURI);
-            }
+        //NOTE: This is just an example return value. Please build a return value
 
-            var dataInfo0 = {
-              id: propertyURI,
-              label: propertyLabel,
-              type: "Property",
-              grandchildren: true
-            };
 
-            properties.push(dataInfo0);
+        //for (var i = 0; i < result.length; i++) {
+        //  var classURI = result[i].class.value;
+        //  var propertyURI = result[i].property.value;
+        //  //var subpropertyURI = result[i].property.value;
+        //
+        //  var classLabel = (result[i].classLabel || {}).value;
+        //  var propertyLabel = (result[i].propertyLabel || {}).value;
+        //  //var subpropertyLabel = (result[i].subpropertyLabel || {}).value;
+        //  //var propertyLabel_ratio = (result[i].propertyLabel_ratio || {}).value;
+        //  //var propertyLabel_interval = (result[i].propertyLabel_interval || {}).value;
+        //  //var propertyLabel_resource = (result[i].propertyLabel_resource || {}).value;
+        //  //var subpropertyLabel_ratio = (result[i].subpropertyLabel_ratio || {}).value;
+        //  //var subpropertyLabel_interval = (result[i].subpropertyLabel_interval || {}).value;
+        //
+        //  if (!classLabel) {
+        //    classLabel = simplifyURI(classURI);
+        //  }
+        //
+        //
+        //  if (!propertyLabel) {
+        //    propertyLabel= simplifyURI(propertyURI);
+        //  }
+        //
+        //  //if (!subpropertyLabel) {
+        //  //  subpropertyLabel = simplifyURI(subpropertyURI);
+        //  //}
+        //
+        //}
 
-          }
+        console.log("ACTUAL RESULT");
+        console.dir(result_treedata);
 
-            for (var i = 0; i < result.length; i++) {
-              var subpropertyURI = result[i].subproperty.value;
-
-              var subpropertyLabel = (result[i].subpropertyLabel || {}).value;
-              if (!subpropertyLabel) {
-                subpropertyLabel = simplifyURI(subpropertyURI);
-              }
-
-              var dataInfo1 = {
-                id: subpropertyURI,
-                label: subpropertyLabel,
-                type: "Subproperty",
-                grandchildren: true
-              };
-
-              subproperties.push(dataInfo1);
-
-            }
-
-        return classes;
-        return properties;
-        return subproperties;
+        return result_treedata;
+      }, function(err) {
+        console.dir(err);
       });
     }
     function queryClasses(endpoint, graph) {

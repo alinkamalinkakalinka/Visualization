@@ -11,14 +11,20 @@ export default Ember.Controller.extend({
     }
 
     this.set('selectedDatasource', dataInfo);
-    var searchResults = this.get('searchResults');
+   // this.set('searchResults', data);
+  //
+//    var searchResults = this.get('searchResults');
     var previousSelection = this.get('previousSelection');
+
+    // NOTE: Why are you calling treeselection_data.search both here and in the search action ?
+    //       Also, why are you calling restore in the else branch?
+
     if (previousSelection.length === 0) {
       return treeselection_data.initialize(dataInfo);
     } else {
       return treeselection_data.restore(dataInfo, previousSelection);
     }
-  }.property('model', 'previousSelection', 'searchResults'), /** SEARCH **/
+  }.property('model', 'previousSelection', 'searchResults'),
   previousSelection: [],
   dataSelection: [],
   selectedDatasource: null,
@@ -43,24 +49,30 @@ export default Ember.Controller.extend({
     search: function () {
       var term = this.get('term');
       var dataInfo = this.get('model');
+ //     var searchresults = this.get('searchResults');
       // NOTE: Commented out unused variables
       //var previousSelection = this.get('previousSelection');
       //var searchResults = this.get('searchResults');
       //var results = this.get('results');
-      console.dir(this);
       var results = treeselection_data.search(dataInfo, term);
+ //     this.get(searchresults. results);
       //this.set('searchResults', results);
 
       // NOTE: treeselection_data.search returns a promise so outputting it to the console won't work
       //console.log('SEARCH RESULTS');
       //console.dir(results);
       results.then(function(data) {
-        console.log('SEARCH RESULTS');
-        console.dir(data);
-        this.set('searchResults', data);
+        // NOTE: This won't work because the value of "this" changes inside a function!
+        //       You have to backup "this" outside of the function and use that backup in the function;
+
+      // this.get(searchresults, results);
+      //  this.set(searchResults, data);
       }, function(err) {
         console.error(err);
       });
+
+      console.log('Keyword');
+      console.dir(term);
       // NOTE: return will not do anything here because this function is an action
       //return {
       //  initialize: initialize,

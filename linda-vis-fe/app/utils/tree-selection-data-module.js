@@ -58,27 +58,19 @@ var treeselection_data_module = function () {
 
   function search(dataInfo, term) {
     console.log('SELECTION TREE COMPONENT - SEARCH KEYWORD');
+    console.log('KEYWORD');
+    console.dir(term);
 
     _location = dataInfo.location;
     _graph = dataInfo.graph;
     _format = dataInfo.format;
     _data_module = getDataModule(_format);
 
-    return _data_module.fullTextSearch(_location, _graph).then(function (classes) {
+    return _data_module.fullTextSearch(_location, _graph, term).then(function (classes) {
       // NOTE: The loadChildren function inside createTreeContent internally calls _data_module.queryProperties,
       //       which returns nodes for all child properties of a node. Is this really what you want?
-      var treecontent = createTreeContent(classes);
-      var term = this.get('term');
-      if (!term) {
-        return treecontent;
-      } else {
-        return treecontent.filter(function (item) {
-          // NOTE: Why should item.name always have to contain the term?
-          //       When the term is in the value of a property, it has to be displayed anyway
-          //       And also if the item is a parent of a node you want to display
-          return item.name.indexOf(term) !== -1;
-        });
-      }
+      var treecontent = createSearchResultTreeContent(classes);
+      return treecontent;
     });
   }
 
@@ -132,12 +124,12 @@ var treeselection_data_module = function () {
       var type = record.type;
       var role = record.role;
       var special = record.special;
-      var grandchildren = record.grandchildren;
+      var hasGrandchildren = record.grandchildren;
 
       treeContent.push({
         title: label,
         key: id,
-        lazy: grandchildren,
+        lazy: hasGrandchildren,
         extraClasses: getCSSClass(type),
         type: type,
         datatype: getDataType(type),
@@ -162,6 +154,36 @@ var treeselection_data_module = function () {
             });
           }
         }
+      });
+    }
+
+    return treeContent;
+  }
+
+  function createSearchResultTreeContent(data) {
+    console.log('SELECTION TREE COMPONENT - CREATING TREE CONTENT');
+    var treeContent = [];
+
+    for (var i = 0; i < data.length; i++) {
+      var record = data[i];
+      var id = record.id;
+      var label = record.label;
+      var type = record.type;
+      var role = record.role;
+      var special = record.special;
+      var children = record.children || [];
+
+      treeContent.push({
+        key: id,
+        title: label,
+        type: type,
+        role: role,
+        special: special,
+        expanded: children.length > 0,
+        extraClasses: getCSSClass(type),
+        datatype: getDataType(type),
+        hideCheckbox: hideCheckbox(type),
+        children: createSearchResultTreeContent(children)
       });
     }
 
