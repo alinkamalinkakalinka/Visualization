@@ -30,6 +30,7 @@ var sparql_data_module = function () {
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
+      query += '    ?property rdf:type ?propertyType .';
       query += '    ?property rdfs:label ?propertyLabel .';
       query += '    ?propertyLabel bif:contains "' + term + '" .';
       query += '   }';
@@ -51,6 +52,7 @@ var sparql_data_module = function () {
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
+      query += '    ?property rdf:type ?propertyType .';
       query += '    ?literal rdfs:label ?instanceLabel .';
       query += '    ?instanceLabel bif:contains "' + term + '" .';
       query += '   }';
@@ -58,6 +60,7 @@ var sparql_data_module = function () {
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
+      query += '    ?property rdf:type ?propertyType .';
       query += '    ?literal ?subproperty ?y .';
       query += '    ?y rdfs:label ?instanceLabel .';
       query += '    ?instanceLabel bif:contains "' + term + '" .';
@@ -66,6 +69,7 @@ var sparql_data_module = function () {
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
+      query += '    ?property rdf:type ?propertyType .';
       query += '    ?literal ?subproperty ?y .';
       query += '    ?subproperty rdfs:label ?instanceLabel .';
       query += '    ?instanceLabel bif:contains "' + term + '" .';
@@ -77,27 +81,39 @@ var sparql_data_module = function () {
       console.dir(query);
       console.dir(term);
 
-      return sparqlProxyQuery(endpoint, query).then(function (result) {
+      return sparqlProxyQuery(endpoint, query).then(function (results) {
         console.log("FULL TEXT SPARQL RESULT");
-        console.dir(result);
+        console.dir(results);
 
-        for (var i = 0; i < result.length; i++) {
 
-          var classURI = result[i].class.value;
-          var propertyURI = result[i].property.value;
-          var subpropertyURI = result[i].property.value;
+        for (var i = 0; i < results.length; i++) {
+          var result = results[i];
 
-          var classLabel = (result[i].classLabel || {}).value;
-          var propertyLabel = (result[i].propertyLabel || {}).value;
-          var subpropertyLabel = (result[i].propertyLabel || {}).value;
+          var classURI = result.class.value;
+          var propertyURI = result.property.value;
+          var subpropertyURI = result.property.value;
 
-          var propertyTypesString = (result[i].propertyTypes || {}).value;
+          var classLabel = (result.classLabel || {}).value;
+          var propertyLabel = (result.propertyLabel || {}).value;
+          var subpropertyLabel = (result.propertyLabel || {}).value;
+
+          var propertyTypesString = (result.propertyTypes || {}).value;
           var propertyTypes;
           if (propertyTypesString) {
             propertyTypes = propertyTypesString.split(' ');
           } else {
             propertyTypes = [];
           }
+
+            if (!classLabel) {
+              classLabel = simplifyURI(classURI);
+            }
+            if (!propertyLabel) {
+              propertyLabel= simplifyURI(propertyURI);
+            }
+            if (!subpropertyLabel) {
+              subpropertyLabel = simplifyURI(subpropertyURI);
+            }
 
           var result_treedata = [
             {
@@ -264,6 +280,7 @@ var sparql_data_module = function () {
         return;
     }
 
+
     function queryProperties(endpoint, graph, _class, _properties) {
         var query = "";
 
@@ -362,7 +379,8 @@ var sparql_data_module = function () {
 
                 properties.push(dataInfo);
             }
-
+          console.log("ACTUAL RESULT Prop");
+          console.dir(dataInfo);
             return properties;
         });
     }
