@@ -23,6 +23,9 @@ var sparql_data_module = function () {
       query += 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>';
       query += 'PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>';
       query += 'SELECT DISTINCT ?class ?property ?subproperty';
+      query += ' SAMPLE(?propertyLabel1) as ?propertyLabel1';
+      query += ' GROUP_CONCAT(STR(?propertyType) ; separator=" ") as ?propertyTypes ';
+      query += ' SAMPLE(?literal) as ?sampleValue ';
       query += ' WHERE ';
       query += '{';
       query += ' GRAPH <' + graph + '>';
@@ -31,8 +34,8 @@ var sparql_data_module = function () {
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
       query += '    ?property rdf:type ?propertyType .';
-      query += '    ?property rdfs:label ?propertyLabel .';
-      query += '    ?propertyLabel bif:contains "' + term + '" .';
+      query += '    ?property rdfs:label ?propertyLabel1 .';
+      query += '    ?propertyLabel1 bif:contains "' + term + '" .';
       query += '   }';
       query += '   UNION';
       query += '   {';
@@ -84,91 +87,159 @@ var sparql_data_module = function () {
       return sparqlProxyQuery(endpoint, query).then(function (results) {
         console.log("FULL TEXT SPARQL RESULT");
         console.dir(results);
+        //var resultTree = new Array();
+
+        var roots = [];
+
+        var getPropertySOM = function(result){
+          console.log("result for som");
+          console.dir(result);
+          var sampleValueType = (result.sampleValue || {}).type;
+          var sampleValue = (result.sampleValue || {}).value;
+          var scaleOfMeasurement;
+          switch (sampleValueType) {
+            case "literal":
+            case "typed-literal":
+              scaleOfMeasurement = predictRDFPropertySOM(result.property.value);
+
+              if (!scaleOfMeasurement) {
+                var datatype = result.sampleValue.datatype;
+                if (datatype) {
+                  scaleOfMeasurement = predictRDFDatatypeSOM(datatype);
+                } else {
+                  var parsedSampleValue = util.toScalar(sampleValue);
+                  scaleOfMeasurement = util.predictValueSOM(parsedSampleValue);
+                }
+              }
+              break;
+            case "uri":
+            case "bnode":
+              scaleOfMeasurement = "Resource";
+              break;
+            default:
+              scaleOfMeasurement = "Nothing";
+              break;
+          }
+          return scaleOfMeasurement;
+        }
+
+
+        var findChildren = function(parent,results){
+          var children = []
+          console.dir(results)
+          for (var i=0; i<results.length; i++){
+            console.dir(results[i])
+            if (results[i].class.value == parent.id){
+              if (results[i].subproperty){
+                children.push(
+                  {id:results[i].property.value,
+                    label:simplifyURI(results[i].property.value),
+                    type:getPropertySOM(results[i]),
+                    role:"",
+                    special: false,
+                    children:[{
+                      id:results[i].subproperty.value,
+
+                    }]
+                  });
+              }else{
+                children.push({
+                  id:results[i].property.value,
+                  label:simplifyURI(results[i].property.value),
+                  type:getPropertySOM(results[i]),
+                  role:"",
+                  special: false,
+
+                });
+              }
+            }
+          }
+          return children;
+        }
 
 
         for (var i = 0; i < results.length; i++) {
           var result = results[i];
-
+          //create roots
           var classURI = result.class.value;
-          var propertyURI = result.property.value;
-          var subpropertyURI = result.property.value;
-
-          var classLabel = (result.classLabel || {}).value;
-          var propertyLabel = (result.propertyLabel || {}).value;
-          var subpropertyLabel = (result.propertyLabel || {}).value;
-
-          var propertyTypesString = (result.propertyTypes || {}).value;
-          var propertyTypes;
-          if (propertyTypesString) {
-            propertyTypes = propertyTypesString.split(' ');
-          } else {
-            propertyTypes = [];
-          }
-
-            if (!classLabel) {
-              classLabel = simplifyURI(classURI);
-            }
-            if (!propertyLabel) {
-              propertyLabel= simplifyURI(propertyURI);
-            }
-            if (!subpropertyLabel) {
-              subpropertyLabel = simplifyURI(subpropertyURI);
-            }
-
-          var result_treedata = [
-            {
+          if (!roots.filter(function (x) {
+              return x.id == classURI
+            }).length) {
+            roots.push({
               id: classURI,
-              label: classLabel,
               type: "Class",
-              children: [
-                {
-                  id: propertyURI,
-                  label: propertyLabel,
-                  role: predictRDFPropertyRole(propertyURI, propertyTypes),
-                  special: false,
-                  type: "Ratio",
-                  children: []
-                }, {
-                  id: propertyURI,
-                  label: propertyLabel,
-                  role: predictRDFPropertyRole(propertyURI, propertyTypes),
-                  special: false,
-                  type: "Interval",
-                  children: []
-                }, {
-                  id: propertyURI,
-                  label: propertyLabel,
-                  role: predictRDFPropertyRole(propertyURI, propertyTypes),
-                  special: false,
-                  type: "Resource",
-                  children: [
-                    {
-                      id: subpropertyURI,
-                      label: subpropertyLabel,
-                      role: predictRDFPropertyRole(subpropertyURI, ["http://purl.org/linked-data/cube#MeasureProperty"]),
-                      special: false,
-                      type: "Ratio",
-                      children: []
-                    }, {
-                      id: subpropertyURI,
-                      label: subpropertyLabel,
-                      role: predictRDFPropertyRole(subpropertyURI, ["http://purl.org/linked-data/cube#DimensionProperty"]),
-                      special: false,
-                      type: "Interval",
-                      children: []
-                    }
-                  ]
-                }
-              ]
-            }
-          ];
-
-
+              label: simplifyURI(classURI),
+              children: {}
+            })
+          }
         }
-        console.log("SEARCH RESULT");
-        console.dir(result_treedata);
+        for (var i = 0; i < roots.length; i++){
+          roots[i].children = findChildren(roots[i],results)
+        }
+///start
+            //
+            //if (!classLabel) {
+            //  classLabel = simplifyURI(classURI);
+            //}
+            //if (!propertyLabel) {
+            //  propertyLabel = simplifyURI(propertyURI);
+            //}
+            //if (!subpropertyLabel) {
+            //  subpropertyLabel = simplifyURI(subpropertyURI);
+            //}
+
+            var result_treedata = []
+            //  {
+            //    id: classURI,
+            //    label: classLabel,
+            //    type: "Class",
+            //    children: [
+            //      {
+            //        id: propertyURI,
+            //        label: propertyLabel,
+            //        role: predictRDFPropertyRole(propertyURI, propertyTypes),
+            //        special: false,
+            //        type: scaleOfMeasurement,
+            //        children: []
+            //      }, {
+            //        id: propertyURI,
+            //        label: propertyLabel,
+            //        role: predictRDFPropertyRole(propertyURI, propertyTypes),
+            //        special: false,
+            //        type: "Interval",
+            //        children: []
+            //      }, {
+            //        id: propertyURI,
+            //        label: propertyLabel,
+            //        role: predictRDFPropertyRole(propertyURI, propertyTypes),
+            //        special: false,
+            //        type: "Resource",
+            //        children: [
+            //          {
+            //            id: subpropertyURI,
+            //            label: subpropertyLabel,
+            //            role: predictRDFPropertyRole(subpropertyURI, ["http://purl.org/linked-data/cube#MeasureProperty"]),
+            //            special: false,
+            //            type: "Ratio",
+            //            children: []
+            //          }, {
+            //            id: subpropertyURI,
+            //            label: subpropertyLabel,
+            //            role: predictRDFPropertyRole(subpropertyURI, ["http://purl.org/linked-data/cube#DimensionProperty"]),
+            //            special: false,
+            //            type: "Interval",
+            //            children: []
+            //          }
+            //        ]
+            //      }
+            //    ]
+            //  }
+            //];
 
 
+
+        console.log("roots");
+        console.dir(roots);
         //NOTE: This is just an example return value. Please build a return value
 
 
