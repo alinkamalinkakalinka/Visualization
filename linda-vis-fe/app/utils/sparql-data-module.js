@@ -23,9 +23,11 @@ var sparql_data_module = function () {
       query += 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>';
       query += 'PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>';
       query += 'SELECT DISTINCT ?class ?property ?subproperty';
-      query += ' SAMPLE(?propertyLabel1) as ?propertyLabel1';
-      query += ' GROUP_CONCAT(STR(?propertyType) ; separator=" ") as ?propertyTypes ';
+      query += ' SAMPLE(?propertyLabel1) as ?propertyLabel';
+//      query += ' GROUP_CONCAT(STR(?propertyType) ; separator=" ") as ?propertyTypes ';
       query += ' SAMPLE(?literal) as ?sampleValue ';
+      query += ' SAMPLE(?instanceLabel1) as ?instanceLabel';
+      query += ' SAMPLE(?y) as ?subsampleValue ';
       query += ' WHERE ';
       query += '{';
       query += ' GRAPH <' + graph + '>';
@@ -33,7 +35,7 @@ var sparql_data_module = function () {
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
-      query += '    ?property rdf:type ?propertyType .';
+//      query += '    ?property rdf:type ?propertyType .';
       query += '    ?property rdfs:label ?propertyLabel1 .';
       query += '    ?propertyLabel1 bif:contains "' + term + '" .';
       query += '   }';
@@ -55,27 +57,28 @@ var sparql_data_module = function () {
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
-      query += '    ?property rdf:type ?propertyType .';
-      query += '    ?literal rdfs:label ?instanceLabel .';
-      query += '    ?instanceLabel bif:contains "' + term + '" .';
+//      query += '    ?property rdf:type ?propertyType .';
+//      query += '    ?literal rdfs:label ?instanceLabel .';
+      query += '    ?literal rdfs:label ?propertyLabel1 .';
+      query += '    ?propertyLabel1 bif:contains "' + term + '" .';
       query += '   }';
       query += '   UNION';
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
-      query += '    ?property rdf:type ?propertyType .';
+//      query += '    ?property rdf:type ?propertyType .';
       query += '    ?literal ?subproperty ?y .';
-      query += '    ?y rdfs:label ?instanceLabel .';
-      query += '    ?instanceLabel bif:contains "' + term + '" .';
+      query += '    ?y rdfs:label ?instanceLabel1 .';
+      query += '    ?instanceLabel1 bif:contains "' + term + '" .';
       query += '   }';
       query += '   UNION';
       query += '   {';
       query += '    ?x ?property ?literal .';
       query += '    ?x a ?class .';
-      query += '    ?property rdf:type ?propertyType .';
+//      query += '    ?property rdf:type ?propertyType .';
       query += '    ?literal ?subproperty ?y .';
-      query += '    ?subproperty rdfs:label ?instanceLabel .';
-      query += '    ?instanceLabel bif:contains "' + term + '" .';
+      query += '    ?subproperty rdfs:label ?instanceLabel1 .';
+      query += '    ?instanceLabel1 bif:contains "' + term + '" .';
       query += '   }';
       query += ' }';
       query += '}';
@@ -91,19 +94,19 @@ var sparql_data_module = function () {
 
         var roots = [];
 
-        var getPropertySOM = function(result){
-          console.log("result for som");
-          console.dir(result);
-          var sampleValueType = (result.sampleValue || {}).type;
-          var sampleValue = (result.sampleValue || {}).value;
+        var getPropertySOM = function(sampleValue,propValue){
+          //console.log("result for som");
+          //console.dir(result);
+          var sampleValueType = (sampleValue || {}).type;
+          sampleValue = (sampleValue || {}).value;
           var scaleOfMeasurement;
           switch (sampleValueType) {
             case "literal":
             case "typed-literal":
-              scaleOfMeasurement = predictRDFPropertySOM(result.property.value);
+              scaleOfMeasurement = predictRDFPropertySOM(propValue);
 
               if (!scaleOfMeasurement) {
-                var datatype = result.sampleValue.datatype;
+                var datatype = sampleValue.datatype;
                 if (datatype) {
                   scaleOfMeasurement = predictRDFDatatypeSOM(datatype);
                 } else {
@@ -121,32 +124,35 @@ var sparql_data_module = function () {
               break;
           }
           return scaleOfMeasurement;
-        }
+        };
 
 
         var findChildren = function(parent,results){
-          var children = []
-          console.dir(results)
+          var children = [];
+          //console.dir(results);
           for (var i=0; i<results.length; i++){
-            console.dir(results[i])
-            if (results[i].class.value == parent.id){
+            //console.dir(results[i]);
+            if (results[i].class.value === parent.id){
               if (results[i].subproperty){
                 children.push(
                   {id:results[i].property.value,
                     label:simplifyURI(results[i].property.value),
-                    type:getPropertySOM(results[i]),
+                    type:getPropertySOM(results[i].sampleValue,results[i].property.value),
                     role:"",
                     special: false,
                     children:[{
                       id:results[i].subproperty.value,
-
+                      label:simplifyURI(results[i].subproperty.value),
+                      type:getPropertySOM(results[i].subsampleValue,results[i].subproperty.value),
+                      role: "",
+                      special: false
                     }]
                   });
               }else{
                 children.push({
                   id:results[i].property.value,
                   label:simplifyURI(results[i].property.value),
-                  type:getPropertySOM(results[i]),
+                  type:getPropertySOM(results[i].sampleValue,results[i].property.value),
                   role:"",
                   special: false,
 
@@ -155,7 +161,7 @@ var sparql_data_module = function () {
             }
           }
           return children;
-        }
+        };
 
 
         for (var i = 0; i < results.length; i++) {
@@ -163,18 +169,18 @@ var sparql_data_module = function () {
           //create roots
           var classURI = result.class.value;
           if (!roots.filter(function (x) {
-              return x.id == classURI
+              return x.id === classURI;
             }).length) {
             roots.push({
               id: classURI,
               type: "Class",
               label: simplifyURI(classURI),
               children: {}
-            })
+            });
           }
         }
         for (var i = 0; i < roots.length; i++){
-          roots[i].children = findChildren(roots[i],results)
+          roots[i].children = findChildren(roots[i],results);
         }
 ///start
             //
@@ -188,7 +194,6 @@ var sparql_data_module = function () {
             //  subpropertyLabel = simplifyURI(subpropertyURI);
             //}
 
-            var result_treedata = []
             //  {
             //    id: classURI,
             //    label: classLabel,
@@ -273,9 +278,9 @@ var sparql_data_module = function () {
         //}
 
         console.log("ACTUAL RESULT");
-        console.dir(result_treedata);
+        console.dir(roots);
 
-        return result_treedata;
+        return roots;
       }, function(err) {
         console.dir(err);
       });
@@ -450,8 +455,6 @@ var sparql_data_module = function () {
 
                 properties.push(dataInfo);
             }
-          console.log("ACTUAL RESULT Prop");
-          console.dir(dataInfo);
             return properties;
         });
     }
