@@ -9,7 +9,13 @@ export default Ember.Controller.extend({
     if (!dataInfo) {
       return {};
     }
+    var searchResults = this.get("searchResults");
+    console.log('azaza');
+    console.dir(searchResults);
 
+    if (searchResults){
+      return searchResults;
+    }
     this.set('selectedDatasource', dataInfo);
    // this.set('searchResults', data);
   //
@@ -24,6 +30,7 @@ export default Ember.Controller.extend({
     } else {
       return treeselection_data.restore(dataInfo, previousSelection);
     }
+
   }.property('model', 'previousSelection', 'searchResults'),
   previousSelection: [],
   dataSelection: [],
@@ -59,17 +66,17 @@ export default Ember.Controller.extend({
       //this.set('searchResults', results);
 
       // NOTE: treeselection_data.search returns a promise so outputting it to the console won't work
-      //console.log('SEARCH RESULTS');
-      //console.dir(results);
-      results.then(function(data) {
+      console.log('SEARCH RESULTS1');
+      console.dir(results);
+      //results.then(function(data) {
         // NOTE: This won't work because the value of "this" changes inside a function!
         //       You have to backup "this" outside of the function and use that backup in the function;
 
       // this.get(searchresults, results);
-      //  this.set(searchResults, data);
-      }, function(err) {
-        console.error(err);
-      });
+       this.set("searchResults", results);
+      //}, function(err) {
+      //  console.error(err);
+      //});
 
       console.log('Keyword');
       console.dir(term);

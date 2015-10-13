@@ -70,6 +70,8 @@ var treeselection_data_module = function () {
       // NOTE: The loadChildren function inside createTreeContent internally calls _data_module.queryProperties,
       //       which returns nodes for all child properties of a node. Is this really what you want?
       var treecontent = createSearchResultTreeContent(classes);
+      console.log("TREECONTENT SEARCH RESULT")
+      console.dir(treecontent)
       return treecontent;
     });
   }

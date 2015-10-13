@@ -241,10 +241,6 @@ var sparql_data_module = function () {
             //  }
             //];
 
-
-
-        console.log("roots");
-        console.dir(roots);
         //NOTE: This is just an example return value. Please build a return value
 
 
