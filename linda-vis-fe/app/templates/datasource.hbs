@@ -40,6 +40,21 @@
               {{data-table preview=controller.dataSelection datasource=controller.selectedDatasource}}
             </div>
             <div class="panel-footer clearfix">
+                <h1 class="panel-title pull-left">Filters</h1>
+            </div>
+
+            <tr>
+                <select name ="Tree values" id="filterSelect">
+                    <option value="Select Column">Select Column</option>
+                </select>
+
+                <label>Min:</label>
+                <td><input type="text" id="min" name="min"></td>
+
+                <label>Max:</label>
+                <td><input type="text" id="max" name="max"></td>
+            </tr>
+            <div class="panel-footer clearfix">
                 <button type="button" class="btn btn-default pull-right" {{action 'visualize'}}>
                     <span class="glyphicon glyphicon-stats" aria-hidden="true"></span> Visualize
                 </button>
