@@ -17,13 +17,7 @@ export default Ember.Controller.extend({
       return searchResults;
     }
     this.set('selectedDatasource', dataInfo);
-   // this.set('searchResults', data);
-  //
-//    var searchResults = this.get('searchResults');
     var previousSelection = this.get('previousSelection');
-
-    // NOTE: Why are you calling treeselection_data.search both here and in the search action ?
-    //       Also, why are you calling restore in the else branch?
 
     if (previousSelection.length === 0) {
       return treeselection_data.initialize(dataInfo);
@@ -60,10 +54,6 @@ export default Ember.Controller.extend({
       console.log('SEARCH RESULTS1');
       console.dir(results);
        this.set("searchResults", results);
-      //}, function(err) {
-      //  console.error(err);
-      //});
-
       console.log('Keyword');
       console.dir(term);
 

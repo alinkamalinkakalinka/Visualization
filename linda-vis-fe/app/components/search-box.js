@@ -1,6 +1,3 @@
-/**
- * Created by alina on 30.08.15. treedata or content???? how to bind???
- */
 import Ember from 'ember';
 
 export default Ember.TextField.extend({

@@ -24,7 +24,6 @@ var sparql_data_module = function () {
       query += 'PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>';
       query += 'SELECT DISTINCT ?class ?property ?subproperty';
       query += ' SAMPLE(?propertyLabel1) as ?propertyLabel';
-//      query += ' GROUP_CONCAT(STR(?propertyType) ; separator=" ") as ?propertyTypes ';
       query += ' SAMPLE(?literal) as ?sampleValue ';
       query += ' SAMPLE(?instanceLabel1) as ?instanceLabel';
       query += ' SAMPLE(?y) as ?subsampleValue ';
@@ -87,13 +86,13 @@ var sparql_data_module = function () {
       query += '    ?subproperty rdfs:label ?instanceLabel1 .';
       query += '    ?instanceLabel1 bif:contains \'"' + term + '*"\' .';
       query += '   }';
-      query += '   UNION';
-      query += '   {';
-      query += '    ?x ?property ?literal .';
-      query += '    ?x a ?class .';
-      query += '    ?literal ?subproperty ?y .';
-      query += '    FILTER(contains(lcase(str(?subproperty)), "' + term + '")) ';
-      query += '   }';
+      //query += '   UNION';
+      //query += '   {';
+      //query += '    ?x ?property ?literal .';
+      //query += '    ?x a ?class .';
+      //query += '    ?literal ?subproperty ?y .';
+      //query += '    FILTER(contains(lcase(str(?subproperty)), "' + term + '")) ';
+      //query += '   }';
 // prefLabel
       query += '   UNION';
       query += '   {';
@@ -149,13 +148,10 @@ var sparql_data_module = function () {
       return sparqlProxyQuery(endpoint, query).then(function (results) {
         console.log("FULL TEXT SPARQL RESULT");
         console.dir(results);
-        //var resultTree = new Array();
 
         var roots = [];
 
         var getPropertySOM = function(sampleValue,propValue){
-          //console.log("result for som");
-          //console.dir(result);
           var sampleValueType = (sampleValue || {}).type;
           sampleValue = (sampleValue || {}).value;
           var scaleOfMeasurement;

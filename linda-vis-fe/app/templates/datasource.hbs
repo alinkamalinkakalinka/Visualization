@@ -6,15 +6,13 @@
                 <h1 class="panel-title pull-left">Explore and Select Data</h1>
             </div>
             <div class="panel-body">
-                <!-- NOTE: Why treedata=controller.treeContent and valueBinding=treedata? -->
-              {{! search-box treedata=controller.treeContent term=controller.term valueBinding=treedata}}
               {{search-box term=controller.term}}
               <button type="button" class="btn btn-default" {{action 'search'}}>
-                  <!-- NOTE: Why the span and the aria-hidden attribute? -->
                   <span aria-hidden="true"></span> Search
               </button>
+                <label name="NoResults" id="NoResults" style="margin-left: 10px; font-size:13px; font-weight: bold; color: #CC6633;" class= "hidden">No matches</label>
+                <label name="TooShort" id="TooShort" style="margin-left: 10px; font-size:13px; font-weight: bold; color: #CC6633;" class= "hidden">Keyword is too short</label>
               <p></p>
-              <!-- NOTE: Why valueBinding=treedata? I dont see any use of this in tree-selection.js -->
               {{tree-selection treedata=controller.treeContent selection=controller.dataSelection}}
             </div>
             <div class="panel-footer clearfix">

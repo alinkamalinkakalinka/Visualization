@@ -79,8 +79,6 @@ var treeselection_data_module = function () {
       labelTooShort.className= 'hidden';
     }
     return _data_module.fullTextSearch(_location, _graph, term).then(function (classes) {
-      // NOTE: The loadChildren function inside createTreeContent internally calls _data_module.queryProperties,
-      //       which returns nodes for all child properties of a node. Is this really what you want?
       var treecontent = createSearchResultTreeContent(classes);
       console.log("TREECONTENT SEARCH RESULT");
       console.dir(treecontent);
@@ -94,7 +92,6 @@ var treeselection_data_module = function () {
           return createTreeContent(data);
         });
       }
-      ///else idk what to do, maybe return some error message?
     });
   }
 

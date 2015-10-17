@@ -35,50 +35,91 @@ define('linda-vis-fe/app', ['exports', 'ember', 'ember/resolver', 'ember/load-in
 });
 define('linda-vis-fe/components/data-table', ['exports', 'ember', 'linda-vis-fe/utils/table-data-module'], function (exports, Ember, table_data_module) {
 
-    'use strict';
+  'use strict';
 
-    exports['default'] = Ember['default'].Component.extend({
-        tagName: "table",
-        list: [],
-        columns: [],
-        classNames: ["no-wrap"],
-        table: null,
-        setContent: (function () {
-            console.log("TABLE COMPONENT - GENERATING PREVIEW");
+  exports['default'] = Ember['default'].Component.extend({
+    tagName: "table",
+    list: [],
+    columns: [],
+    classNames: ["no-wrap"],
+    table: null,
+    setContent: (function () {
+      console.log("TABLE COMPONENT - GENERATING PREVIEW");
 
-            var self = this;
-            var selection = this.get("preview");
-            var datasource = this.get("datasource");
+      var self = this;
+      var selection = this.get("preview");
+      var datasource = this.get("datasource");
+      var fs = document.getElementById("filterSelect");
 
-            if (selection.length > 0) {
-                var columns = table_data_module['default'].getColumns(selection, datasource);
+      if (selection.length > 0) {
+        var columns = table_data_module['default'].getColumns(selection, datasource);
+        fs.options.length = 0;
+        var sk = 0;
 
-                table_data_module['default'].getContent(selection, datasource).then(function (content) {
+        for (var i = 0; i < selection.length; i++) {
+          console.log(selection[i].datatype);
+          if (selection[i].datatype === "Number") {
+            fs.options[sk] = new Option(selection[i].label, i);
+            sk += 1;
+          }
+        }
 
-                    if (self.get("table")) {
-                        self.get("table").api().clear().destroy();
-                        self.$().empty();
-                    }
+        table_data_module['default'].getContent(selection, datasource).then(function (content) {
 
-                    var table = self.$().dataTable({
-                        responsive: {
-                            details: {
-                                type: "inline"
-                            }
-                        },
-                        "data": content.slice(1),
-                        "columns": columns
-                    });
-                    self.set("table", table);
-                });
-            } else {
-                if (self.get("table")) {
-                    self.get("table").api().clear().destroy();
-                    self.$().empty();
-                }
+          if (self.get("table")) {
+            self.get("table").api().clear().destroy();
+            self.$().empty();
+          }
+
+          var table = self.$().dataTable({
+            responsive: {
+              details: {
+                type: "inline"
+              }
+            },
+            "data": content.slice(1),
+            "columns": columns,
+            "scrollX": true
+          });
+
+          self.set("table", table);
+
+          $.fn.dataTable.ext.search.push(function (settings, data) {
+
+            if (fs.selectedIndex > -1) {
+              var min = parseInt($("#min").val(), 10);
+
+              var max = parseInt($("#max").val(), 10);
+
+              var age = parseFloat(data[fs.options[fs.selectedIndex].value]) || 0; // use data for the fsIndex column
+
+              if (isNaN(min) && isNaN(max) || isNaN(min) && age <= max || min <= age && isNaN(max) || min <= age && age <= max) {
+                return true;
+              }
+              return false;
             }
-        }).observes("preview.[]").on("didInsertElement")
-    });
+            return true;
+          });
+
+          // Event listener to the two range filtering inputs to redraw on input
+          $("#min, #max").keyup(function () {
+            table.fnDraw(); //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          });
+
+          fs.onchange = function () {
+            $("#min").val("");
+            $("#max").val("");
+            table.fnDraw();
+          };
+        });
+      } else {
+        if (self.get("table")) {
+          self.get("table").api().clear().destroy();
+          self.$().empty();
+        }
+      }
+    }).observes("preview.[]").on("didInsertElement")
+  });
 
 });
 define('linda-vis-fe/components/draggable-item', ['exports', 'ember'], function (exports, Ember) {
@@ -175,9 +216,6 @@ define('linda-vis-fe/components/search-box', ['exports', 'ember'], function (exp
 
   'use strict';
 
-  /**
-   * Created by alina on 30.08.15. treedata or content???? how to bind???
-   */
   exports['default'] = Ember['default'].TextField.extend({
     placeholder: 'keyword',
 
@@ -202,56 +240,50 @@ define('linda-vis-fe/components/tree-selection', ['exports', 'ember'], function 
 
     'use strict';
 
-    var Data = Ember['default'].Object.create({
-        data: 'treedata'
-    });
-
-    /* global _ */
-    /*jshint loopfunc: true */
     exports['default'] = Ember['default'].Component.extend({
-        tagName: 'div',
+        tagName: "div",
         tree: null,
         setContent: (function () {
-            console.log('TREE SELECTION COMPONENT - CREATING SELECTION TREE');
-            var content = this.get('treedata');
-            var selection = this.get('selection');
+            console.log("TREE SELECTION COMPONENT - CREATING SELECTION TREE");
+            var content = this.get("treedata");
+            var selection = this.get("selection");
             console.dir(JSON.stringify(selection));
 
             //selection = []; todo needs to be reset
-            this.set('selection', selection);
+            this.set("selection", selection);
 
             var self = this;
 
-            this.$(this.get('element')).fancytree({
-                extensions: ['filter', 'glyph', 'edit', 'wide'],
+            this.$(this.get("element")).fancytree({
+                extensions: ["filter", "glyph", "edit", "wide"],
                 source: content,
                 checkbox: true,
                 icons: false,
                 selectMode: 3,
                 glyph: {
                     map: {
-                        checkbox: 'glyphicon glyphicon-unchecked',
-                        checkboxSelected: 'glyphicon glyphicon-check',
-                        checkboxUnknown: 'glyphicon glyphicon-share',
-                        error: 'glyphicon glyphicon-warning-sign',
-                        expanderClosed: 'glyphicon glyphicon-plus-sign',
-                        expanderLazy: 'glyphicon glyphicon-plus-sign',
-                        expanderOpen: 'glyphicon glyphicon-minus-sign',
-                        loading: 'glyphicon glyphicon-refresh'
+                        checkbox: "glyphicon glyphicon-unchecked",
+                        checkboxSelected: "glyphicon glyphicon-check",
+                        checkboxUnknown: "glyphicon glyphicon-share",
+                        error: "glyphicon glyphicon-warning-sign",
+                        expanderClosed: "glyphicon glyphicon-plus-sign",
+                        expanderLazy: "glyphicon glyphicon-plus-sign",
+                        expanderOpen: "glyphicon glyphicon-minus-sign",
+                        loading: "glyphicon glyphicon-refresh"
                     }
                 },
                 wide: {
-                    iconWidth: '0.3em',
-                    iconSpacing: '0.5em',
-                    levelOfs: '1.5em'
+                    iconWidth: "0.3em",
+                    iconSpacing: "0.5em",
+                    levelOfs: "1.5em"
                 },
                 filter: {
-                    mode: 'dimm',
+                    mode: "dimm",
                     autoApply: true
                 },
                 lazyLoad: function lazyLoad(event, data) {
-                    console.log('TREE SELECTION COMPONENT - LOADING CHILDREN');
-                    console.log('DATA');
+                    console.log("TREE SELECTION COMPONENT - LOADING CHILDREN");
+                    console.log("DATA");
                     console.dir(data);
                     var node = data.node;
                     var node_path = self.getNodePath(node);
@@ -259,7 +291,7 @@ define('linda-vis-fe/components/tree-selection', ['exports', 'ember'], function 
                     data.result = data.node.data._children.loadChildren(node_path.slice().reverse());
                 },
                 select: function select(event, data) {
-                    console.log('TREE SELECTION COMPONENT - GENERATING PREVIEWS');
+                    console.log("TREE SELECTION COMPONENT - GENERATING PREVIEWS");
                     var tree = data.tree;
                     var node = data.node;
                     var branch_root = self.getBranchRoot(node);
@@ -290,7 +322,7 @@ define('linda-vis-fe/components/tree-selection', ['exports', 'ember'], function 
                                 return _.isEqual(value.parent, node_path);
                             });
 
-                            if (!already_selected && node_.hideCheckbox === false && node_type !== 'Class') {
+                            if (!already_selected && node_.hideCheckbox === false && node_type !== "Class") {
 
                                 selection.pushObject({
                                     label: node_label,
@@ -330,10 +362,10 @@ define('linda-vis-fe/components/tree-selection', ['exports', 'ember'], function 
                         }
                     }
 
-                    self.set('selection', selection);
+                    self.set("selection", selection);
                 }
             });
-        }).observes('treedata').on('didInsertElement'),
+        }).observes("treedata").on("didInsertElement"),
         getNodePath: function getNodePath(node) {
             var node_path_with_labels = [];
             node_path_with_labels.push({ id: node.key, label: node.title });
@@ -348,82 +380,99 @@ define('linda-vis-fe/components/tree-selection', ['exports', 'ember'], function 
             return node_path_with_labels;
         },
         getBranchRoot: function getBranchRoot(node) {
-            while (node.parent.title !== 'root') {
+            while (node.parent.title !== "root") {
                 node = node.parent;
             }
             return node;
         },
         hideCheckbox: function hideCheckbox(type) {
             switch (type) {
-                case 'Ratio':
-                case 'Interval':
-                case 'Nominal':
-                case 'Angular':
-                case 'Geographic Latitude':
-                case 'Geographic Longitude':
-                case 'Class':
+                case "Ratio":
+                case "Interval":
+                case "Nominal":
+                case "Angular":
+                case "Geographic Latitude":
+                case "Geographic Longitude":
+                case "Class":
                     return false;
-                case 'Resource':
-                case 'Nothing':
+                case "Resource":
+                case "Nothing":
                     return true;
             }
-            console.error('Unknown category: \'' + type + '\'');
+            console.error("Unknown category: '" + type + "'");
             return null;
         } });
 
 });
 define('linda-vis-fe/controllers/datasource', ['exports', 'ember', 'linda-vis-fe/utils/tree-selection-data-module'], function (exports, Ember, treeselection_data) {
 
-    'use strict';
+  'use strict';
 
-    exports['default'] = Ember['default'].Controller.extend({
-        isToggled: true,
-        treeContent: (function () {
-            console.log("DATASOURCE CONTROLLER");
-            var dataInfo = this.get("model"); // data sources
-            if (!dataInfo) {
-                return {};
-            }
+  exports['default'] = Ember['default'].Controller.extend({
+    isToggled: true,
+    treeContent: (function () {
+      console.log("DATASOURCE CONTROLLER");
+      var dataInfo = this.get("model"); // data sources
+      if (!dataInfo) {
+        return {};
+      }
+      var searchResults = this.get("searchResults");
+      console.log("azaza");
+      console.dir(searchResults);
 
-            this.set("selectedDatasource", dataInfo);
+      if (searchResults) {
+        return searchResults;
+      }
+      this.set("selectedDatasource", dataInfo);
+      var previousSelection = this.get("previousSelection");
 
-            var previousSelection = this.get("previousSelection");
-            if (previousSelection.length === 0) {
-                return treeselection_data['default'].initialize(dataInfo);
-            } else {
-                return treeselection_data['default'].restore(dataInfo, previousSelection);
-            }
-        }).property("model", "previousSelection"),
-        previousSelection: [],
-        dataSelection: [],
-        selectedDatasource: null,
-        resetSelection: (function () {
-            this.get("dataSelection").length = 0;
-        }).observes("model"),
-        actions: {
-            visualize: function visualize() {
-                var self = this;
-                var selection = this.get("dataSelection");
-                var datasource = this.get("selectedDatasource");
-                var selected = treeselection_data['default'].getDataSelection(selection, datasource);
-                var dataselection = this.store.createRecord("dataselection", selected);
-                console.log("VISUALIZE");
-                dataselection.save().then(function (responseDataselection) {
-                    console.log("SAVED DATA SELECTION. TRANSITION TO VISUALIZATION ROUTE .....");
-                    console.dir(responseDataselection);
-                    self.transitionToRoute("visualization", "dataselection", responseDataselection.id);
-                });
-            },
-            toggle: function toggle() {
-                var toggled = this.get("isToggled");
-                if (toggled) {
-                    this.set("isToggled", false);
-                } else {
-                    this.set("isToggled", true);
-                }
-            }
+      if (previousSelection.length === 0) {
+        return treeselection_data['default'].initialize(dataInfo);
+      } else {
+        return treeselection_data['default'].restore(dataInfo, previousSelection);
+      }
+    }).property("model", "previousSelection", "searchResults"),
+    previousSelection: [],
+    dataSelection: [],
+    selectedDatasource: null,
+    searchResults: null,
+    resetSelection: (function () {
+      this.get("dataSelection").length = 0;
+    }).observes("model"),
+    actions: {
+      visualize: function visualize() {
+        var self = this;
+        var selection = this.get("dataSelection");
+        var datasource = this.get("selectedDatasource");
+        var selected = treeselection_data['default'].getDataSelection(selection, datasource);
+        var dataselection = this.store.createRecord("dataselection", selected);
+        console.log("VISUALIZE");
+        dataselection.save().then(function (responseDataselection) {
+          console.log("SAVED DATA SELECTION. TRANSITION TO VISUALIZATION ROUTE .....");
+          console.dir(responseDataselection);
+          self.transitionToRoute("visualization", "dataselection", responseDataselection.id);
+        });
+      },
+      search: function search() {
+        var term = this.get("term");
+        var dataInfo = this.get("model");
+        var results = treeselection_data['default'].search(dataInfo, term);
+        console.log("SEARCH RESULTS1");
+        console.dir(results);
+        this.set("searchResults", results);
+        console.log("Keyword");
+        console.dir(term);
+      },
+      toggle: function toggle() {
+        var toggled = this.get("isToggled");
+        if (toggled) {
+          this.set("isToggled", false);
+        } else {
+          this.set("isToggled", true);
         }
-    });
+      }
+    }
+  });
 
 });
 define('linda-vis-fe/controllers/index', ['exports', 'ember'], function (exports, Ember) {
@@ -436,77 +485,6 @@ define('linda-vis-fe/controllers/index', ['exports', 'ember'], function (exports
             return encodeURIComponent(this.get('controllers.application.datasetsEndpoint'));
         }).property()
     });
-
-});
-define('linda-vis-fe/controllers/main', ['exports', 'ember', 'ember-cli-filter-by-query'], function (exports, Ember, computedFilterByQuery) {
-
-  'use strict';
-
-  /**
-   * Created by alina on 30.08.15.
-   */
-  exports['default'] = Ember['default'].Controller.extend({
-    queryParams: ['term'],
-    results: ['treedata'],
-    queryResults: computedFilterByQuery['default']('results', 'name', 'term').readOnly(),
-
-    filteredResults: (function () {
-      return this.get('queryResults');
-    }).property('queryResults'),
-
-    actions: {
-      submitSearch: function submitSearch(result) {
-        this.transitionTo('results', { queryParams: { term: result } });
-      }
-    }
-  });
-
-});
-define('linda-vis-fe/controllers/results', ['exports', 'ember'], function (exports, Ember) {
-
-  'use strict';
-
-  /**
-   * Created by alina on 30.08.15.
-   */
-  exports['default'] = Ember['default'].Controller.extend({
-    queryParams: ['term']
-  });
-
-});
-define('linda-vis-fe/controllers/search', ['ember', 'linda-vis-fe/utils/tree-selection-data-module'], function (Ember, treeselection_data) {
-
-  'use strict';
-
-  /**
-   * Created by alina on 30.08.15.
-   */
-  App.IndexController = Ember['default'].ArrayController.extend({
-    search: "",
-    titleFilter: null,
-    actions: {
-      query: function query() {
-        // the current value of the text field
-        var query = this.get("search");
-        this.set("titleFilter", query);
-      },
-      addNote: function addNote() {
-        this.transitionToRoute("main");
-      }
-    },
-    arrangedContent: (function () {
-      var search = this.get("search");
-      binding = Ember['default'].Binding.from("App.tree-selection.content").to("content");
-      binding.connect(this);
-      if (!search) {
-        return this.get("content");
-      }
-
-      return this.get("content").filter(function (note) {
-        return note.get("title").indexOf(search) != -1;
-      });
-    }).property("content", "titleFilter")
-  });
 
 });
 define('linda-vis-fe/controllers/visconfiguration', ['exports', 'ember'], function (exports, Ember) {
@@ -674,33 +652,6 @@ define('linda-vis-fe/controllers/visualization', ['exports', 'ember', 'linda-vis
             }
         }
     });
-
-});
-define('linda-vis-fe/helpers/search', ['ember'], function (Ember) {
-
-  'use strict';
-
-  /**
-   * Created by alina on 30.08.15.
-   */
-
-  Ember['default'].Handlebars.helper('autocomplete', Ember['default'].View.extend({
-    templateName: 'controls/autocomplete',
-
-    filteredList: (function () {
-      binding = Ember['default'].Binding.from('App.Data.value').to('content');
-      binding.connect(this);
-      filter = this.get('filter');
-
-      if (!filter) {
-        return content;
-      }
-
-      return list.filter(function (item) {
-        return item.name.indexOf(filter) !== -1;
-      });
-    }).property('list.@each', 'filter')
-  }));
 
 });
 define('linda-vis-fe/initializers/app-version', ['exports', 'linda-vis-fe/config/environment', 'ember'], function (exports, config, Ember) {
@@ -1412,7 +1363,7 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("                    ");
+          var el1 = dom.createTextNode("                      ");
           dom.appendChild(el0, el1);
           var el1 = dom.createElement("span");
           dom.setAttribute(el1,"class","glyphicon glyphicon-resize-full");
@@ -1454,7 +1405,7 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("                    ");
+          var el1 = dom.createTextNode("                      ");
           dom.appendChild(el0, el1);
           var el1 = dom.createElement("span");
           dom.setAttribute(el1,"class","glyphicon glyphicon-resize-small");
@@ -1527,15 +1478,48 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("div");
         dom.setAttribute(el4,"class","panel-body");
-        var el5 = dom.createTextNode("\n              Search: ");
+        var el5 = dom.createTextNode("\n              ");
         dom.appendChild(el4, el5);
         var el5 = dom.createComment("");
         dom.appendChild(el4, el5);
         var el5 = dom.createTextNode("\n              ");
         dom.appendChild(el4, el5);
-        var el5 = dom.createElement("p");
+        var el5 = dom.createElement("button");
+        dom.setAttribute(el5,"type","button");
+        dom.setAttribute(el5,"class","btn btn-default");
+        var el6 = dom.createTextNode("\n                  ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createElement("span");
+        dom.setAttribute(el6,"aria-hidden","true");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode(" Search\n              ");
+        dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
         var el5 = dom.createTextNode("\n                ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("label");
+        dom.setAttribute(el5,"name","NoResults");
+        dom.setAttribute(el5,"id","NoResults");
+        dom.setAttribute(el5,"style","margin-left: 10px; font-size:13px; font-weight: bold; color: #CC6633;");
+        dom.setAttribute(el5,"class","hidden");
+        var el6 = dom.createTextNode("No matches");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n                ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("label");
+        dom.setAttribute(el5,"name","TooShort");
+        dom.setAttribute(el5,"id","TooShort");
+        dom.setAttribute(el5,"style","margin-left: 10px; font-size:13px; font-weight: bold; color: #CC6633;");
+        dom.setAttribute(el5,"class","hidden");
+        var el6 = dom.createTextNode("Keyword is too short");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n              ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("p");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n              ");
         dom.appendChild(el4, el5);
         var el5 = dom.createComment("");
         dom.appendChild(el4, el5);
@@ -1596,9 +1580,74 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
         dom.appendChild(el3, el4);
         var el4 = dom.createElement("div");
         dom.setAttribute(el4,"class","panel-body");
-        var el5 = dom.createTextNode("\n                ");
+        var el5 = dom.createTextNode("\n              ");
         dom.appendChild(el4, el5);
         var el5 = dom.createComment("");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n            ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n            ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("div");
+        dom.setAttribute(el4,"class","panel-footer clearfix");
+        var el5 = dom.createTextNode("\n                ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("h1");
+        dom.setAttribute(el5,"class","panel-title pull-left");
+        var el6 = dom.createTextNode("Filters");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n            ");
+        dom.appendChild(el4, el5);
+        dom.appendChild(el3, el4);
+        var el4 = dom.createTextNode("\n\n            ");
+        dom.appendChild(el3, el4);
+        var el4 = dom.createElement("tr");
+        var el5 = dom.createTextNode("\n                ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("select");
+        dom.setAttribute(el5,"name","Tree values");
+        dom.setAttribute(el5,"id","filterSelect");
+        var el6 = dom.createTextNode("\n                    ");
+        dom.appendChild(el5, el6);
+        var el6 = dom.createElement("option");
+        dom.setAttribute(el6,"value","Select Column");
+        var el7 = dom.createTextNode("Select Column");
+        dom.appendChild(el6, el7);
+        dom.appendChild(el5, el6);
+        var el6 = dom.createTextNode("\n                ");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n\n                ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("label");
+        var el6 = dom.createTextNode("Min:");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n                ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("td");
+        var el6 = dom.createElement("input");
+        dom.setAttribute(el6,"type","text");
+        dom.setAttribute(el6,"id","min");
+        dom.setAttribute(el6,"name","min");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n\n                ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("label");
+        var el6 = dom.createTextNode("Max:");
+        dom.appendChild(el5, el6);
+        dom.appendChild(el4, el5);
+        var el5 = dom.createTextNode("\n                ");
+        dom.appendChild(el4, el5);
+        var el5 = dom.createElement("td");
+        var el6 = dom.createElement("input");
+        dom.setAttribute(el6,"type","text");
+        dom.setAttribute(el6,"id","max");
+        dom.setAttribute(el6,"name","max");
+        dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
         var el5 = dom.createTextNode("\n            ");
         dom.appendChild(el4, el5);
@@ -1618,7 +1667,7 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
         dom.setAttribute(el6,"class","glyphicon glyphicon-stats");
         dom.setAttribute(el6,"aria-hidden","true");
         dom.appendChild(el5, el6);
-        var el6 = dom.createTextNode("   Visualize\n                ");
+        var el6 = dom.createTextNode(" Visualize\n                ");
         dom.appendChild(el5, el6);
         dom.appendChild(el4, el5);
         var el5 = dom.createTextNode("\n            ");
@@ -1660,22 +1709,24 @@ define('linda-vis-fe/templates/datasource', ['exports'], function (exports) {
         var element0 = dom.childAt(fragment, [0]);
         var element1 = dom.childAt(element0, [1]);
         var element2 = dom.childAt(element1, [3, 3]);
-        var element3 = dom.childAt(element0, [3]);
-        var element4 = dom.childAt(element3, [3]);
-        var element5 = dom.childAt(element4, [1, 3]);
-        var element6 = dom.childAt(element4, [5, 1]);
+        var element3 = dom.childAt(element2, [3]);
+        var element4 = dom.childAt(element0, [3]);
+        var element5 = dom.childAt(element4, [3]);
+        var element6 = dom.childAt(element5, [1, 3]);
+        var element7 = dom.childAt(element5, [9, 1]);
         var morph0 = dom.createMorphAt(element2,1,1);
-        var morph1 = dom.createMorphAt(element2,5,5);
-        var morph2 = dom.createMorphAt(element5,1,1);
-        var morph3 = dom.createMorphAt(dom.childAt(element4, [3]),1,1);
+        var morph1 = dom.createMorphAt(element2,11,11);
+        var morph2 = dom.createMorphAt(element6,1,1);
+        var morph3 = dom.createMorphAt(dom.childAt(element5, [3]),1,1);
         element(env, element1, context, "bind-attr", [], {"class": "isToggled:col-md-5:col-md-0"});
-        inline(env, morph0, context, "search-box", [], {"selectRes": "submitSearch", "treedata": get(env, context, "treedata"), "term": get(env, context, "term"), "activeIndex": get(env, context, "activeIndex"), "results": get(env, context, "filteredResults"), "class": "searchField"});
-        inline(env, morph1, context, "tree-selection", [], {"treedata": get(env, context, "controller.treeContent"), "selection": get(env, context, "controller.dataSelection"), "valueBinding": get(env, context, "treedata")});
-        element(env, element3, context, "bind-attr", [], {"class": "isToggled:col-md-7:col-md-12"});
-        element(env, element5, context, "action", ["toggle"], {});
+        inline(env, morph0, context, "search-box", [], {"term": get(env, context, "controller.term")});
+        element(env, element3, context, "action", ["search"], {});
+        inline(env, morph1, context, "tree-selection", [], {"treedata": get(env, context, "controller.treeContent"), "selection": get(env, context, "controller.dataSelection")});
+        element(env, element4, context, "bind-attr", [], {"class": "isToggled:col-md-7:col-md-12"});
+        element(env, element6, context, "action", ["toggle"], {});
         block(env, morph2, context, "if", [get(env, context, "isToggled")], {}, child0, child1);
         inline(env, morph3, context, "data-table", [], {"preview": get(env, context, "controller.dataSelection"), "datasource": get(env, context, "controller.selectedDatasource")});
-        element(env, element6, context, "action", ["visualize"], {});
+        element(env, element7, context, "action", ["visualize"], {});
         return fragment;
       }
     };
@@ -2683,7 +2734,7 @@ define('linda-vis-fe/templates/index', ['exports'], function (exports) {
         hasRendered: false,
         build: function build(dom) {
           var el0 = dom.createDocumentFragment();
-          var el1 = dom.createTextNode("		19. Teh test\n");
+          var el1 = dom.createTextNode("		19. EU Countries\n");
           dom.appendChild(el0, el1);
           return el0;
         },
@@ -2986,8 +3037,8 @@ define('linda-vis-fe/templates/index', ['exports'], function (exports) {
         block(env, morph14, context, "link-to", ["datasource", "Water%20Quality%20Analysis", get(env, context, "datasetsEndpointURI"), "http%3A%2F%2Fwater_quality_check.it%2Finfo", "rdf"], {}, child14, null);
         block(env, morph15, context, "link-to", ["datasource", "Newspaper%20Articles%20Analysis", get(env, context, "datasetsEndpointURI"), "http%3A%2F%2Fnewspaper.org%2Farticles_2007", "rdf"], {}, child15, null);
         block(env, morph16, context, "link-to", ["datasource", "Health Data.gov - Hospital Inpatient Discharges by Facility", get(env, context, "datasetsEndpointURI"), "http%3A%2F%2FHealthData.govHospitalInpatientDischargesbyFacility", "rdf"], {}, child16, null);
-        block(env, morph17, context, "link-to", ["datasource", "TS1", get(env, context, "datasetsEndpointURI"), "http%3A//www.linda-project.org/TS1_LinearRegression_Result_Original", "rdf"], {}, child17, null);
-        block(env, morph18, context, "link-to", ["datasource", "test", get(env, context, "datasetsEndpointURI"), "some/test/path", "rdf"], {}, child18, null);
+        block(env, morph17, context, "link-to", ["datasource", "TS1", get(env, context, "datasetsEndpointURI"), "http%3A%2F%2Fwww.linda-project.org/TS1_LinearRegression_Result_Original", "rdf"], {}, child17, null);
+        block(env, morph18, context, "link-to", ["datasource", "EU Countries", get(env, context, "datasetsEndpointURI"), "http%3A%2F%2Feucountries.org", "rdf"], {}, child18, null);
         return fragment;
       }
     };
@@ -4465,7 +4516,7 @@ define('linda-vis-fe/tests/components/data-table.jshint', function () {
 
   module('JSHint - components');
   test('components/data-table.js should pass jshint', function() { 
-    ok(true, 'components/data-table.js should pass jshint.'); 
+    ok(false, 'components/data-table.js should pass jshint.\ncomponents/data-table.js: line 51, col 9, \'$\' is not defined.\ncomponents/data-table.js: line 55, col 34, \'$\' is not defined.\ncomponents/data-table.js: line 57, col 34, \'$\' is not defined.\ncomponents/data-table.js: line 75, col 9, \'$\' is not defined.\ncomponents/data-table.js: line 80, col 11, \'$\' is not defined.\ncomponents/data-table.js: line 81, col 11, \'$\' is not defined.\n\n6 errors'); 
   });
 
 });
@@ -4515,7 +4566,7 @@ define('linda-vis-fe/tests/components/tree-selection.jshint', function () {
 
   module('JSHint - components');
   test('components/tree-selection.js should pass jshint', function() { 
-    ok(false, 'components/tree-selection.js should pass jshint.\ncomponents/tree-selection.js: line 3, col 5, \'Data\' is defined but never used.\n\n1 error'); 
+    ok(true, 'components/tree-selection.js should pass jshint.'); 
   });
 
 });
@@ -4536,36 +4587,6 @@ define('linda-vis-fe/tests/controllers/index.jshint', function () {
   module('JSHint - controllers');
   test('controllers/index.js should pass jshint', function() { 
     ok(true, 'controllers/index.js should pass jshint.'); 
-  });
-
-});
-define('linda-vis-fe/tests/controllers/main.jshint', function () {
-
-  'use strict';
-
-  module('JSHint - controllers');
-  test('controllers/main.js should pass jshint', function() { 
-    ok(true, 'controllers/main.js should pass jshint.'); 
-  });
-
-});
-define('linda-vis-fe/tests/controllers/results.jshint', function () {
-
-  'use strict';
-
-  module('JSHint - controllers');
-  test('controllers/results.js should pass jshint', function() { 
-    ok(true, 'controllers/results.js should pass jshint.'); 
-  });
-
-});
-define('linda-vis-fe/tests/controllers/search.jshint', function () {
-
-  'use strict';
-
-  module('JSHint - controllers');
-  test('controllers/search.js should pass jshint', function() { 
-    ok(false, 'controllers/search.js should pass jshint.\ncontrollers/search.js: line 24, col 46, Missing semicolon.\ncontrollers/search.js: line 27, col 50, Expected \'!==\' and instead saw \'!=\'.\ncontrollers/search.js: line 28, col 7, Missing semicolon.\ncontrollers/search.js: line 7, col 1, \'App\' is not defined.\ncontrollers/search.js: line 22, col 5, \'binding\' is not defined.\ncontrollers/search.js: line 23, col 5, \'binding\' is not defined.\ncontrollers/search.js: line 5, col 8, \'treeselection_data\' is defined but never used.\n\n7 errors'); 
   });
 
 });
@@ -4610,16 +4631,6 @@ define('linda-vis-fe/tests/helpers/resolver.jshint', function () {
   module('JSHint - helpers');
   test('helpers/resolver.js should pass jshint', function() { 
     ok(true, 'helpers/resolver.js should pass jshint.'); 
-  });
-
-});
-define('linda-vis-fe/tests/helpers/search.jshint', function () {
-
-  'use strict';
-
-  module('JSHint - helpers');
-  test('helpers/search.js should pass jshint', function() { 
-    ok(false, 'helpers/search.js should pass jshint.\nhelpers/search.js: line 11, col 5, \'binding\' is not defined.\nhelpers/search.js: line 12, col 5, \'binding\' is not defined.\nhelpers/search.js: line 13, col 7, \'filter\' is not defined.\nhelpers/search.js: line 15, col 10, \'filter\' is not defined.\nhelpers/search.js: line 15, col 27, \'content\' is not defined.\nhelpers/search.js: line 17, col 12, \'list\' is not defined.\nhelpers/search.js: line 18, col 32, \'filter\' is not defined.\n\n7 errors'); 
   });
 
 });
@@ -4859,7 +4870,7 @@ define('linda-vis-fe/tests/utils/sparql-data-module.jshint', function () {
 
   module('JSHint - utils');
   test('utils/sparql-data-module.js should pass jshint', function() { 
-    ok(true, 'utils/sparql-data-module.js should pass jshint.'); 
+    ok(false, 'utils/sparql-data-module.js should pass jshint.\nutils/sparql-data-module.js: line 228, col 14, Don\'t make functions within a loop.\nutils/sparql-data-module.js: line 237, col 20, \'i\' is already defined.\n\n2 errors'); 
   });
 
 });
@@ -6172,7 +6183,229 @@ define('linda-vis-fe/utils/sparql-data-module', ['exports', 'ember', 'linda-vis-
             var splits = uri.split(/[#/:]/);
             return splits[splits.length - 1];
         }
+        function fullTextSearch(endpoint, graph, term) {
+            var query = "";
 
+            query += "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>";
+            query += "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>";
+            query += "SELECT DISTINCT ?class ?property ?subproperty";
+            query += " SAMPLE(?propertyLabel1) as ?propertyLabel";
+            query += " SAMPLE(?literal) as ?sampleValue ";
+            query += " SAMPLE(?instanceLabel1) as ?instanceLabel";
+            query += " SAMPLE(?y) as ?subsampleValue ";
+            query += " WHERE ";
+            query += "{";
+            query += " GRAPH <" + graph + ">";
+            query += " {";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    ?property rdfs:label ?propertyLabel1 .";
+            query += "    ?propertyLabel1 bif:contains '\"" + term + "*\"' .";
+            query += "   }";
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    ?class rdfs:label ?classLabel .";
+            query += "    ?classLabel bif:contains '\"" + term + "*\"' .";
+            query += "   }";
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    FILTER(contains(lcase(str(?class)), \"" + term + "\")) ";
+            query += "   }";
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    FILTER(contains(lcase(str(?property)), \"" + term + "\")) ";
+            query += "   }";
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    ?x rdfs:label ?instanceLabel .";
+            query += "    ?instanceLabel bif:contains '\"" + term + "*\"' .";
+            query += "   }";
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    ?literal rdfs:label ?propertyLabel1 .";
+            query += "    ?propertyLabel1 bif:contains '\"" + term + "*\"' .";
+            query += "   }";
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    ?literal ?subproperty ?y .";
+            query += "    ?y rdfs:label ?instanceLabel1 .";
+            query += "    ?instanceLabel1 bif:contains '\"" + term + "*\"' .";
+            query += "   }";
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    ?literal ?subproperty ?y .";
+            query += "    ?subproperty rdfs:label ?instanceLabel1 .";
+            query += "    ?instanceLabel1 bif:contains '\"" + term + "*\"' .";
+            query += "   }";
+            //query += '   UNION';
+            //query += '   {';
+            //query += '    ?x ?property ?literal .';
+            //query += '    ?x a ?class .';
+            //query += '    ?literal ?subproperty ?y .';
+            //query += '    FILTER(contains(lcase(str(?subproperty)), "' + term + '")) ';
+            //query += '   }';
+            // prefLabel
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    ?property skos:prefLabel ?propertyLabel1 .";
+            query += "    ?propertyLabel1 bif:contains '\"" + term + "*\"' .";
+            query += "   }";
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    ?class skos:prefLabel ?classLabel .";
+            query += "    ?classLabel bif:contains '\"" + term + "*\"' .";
+            query += "   }";
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    ?x skos:prefLabel ?instanceLabel .";
+            query += "    ?instanceLabel bif:contains '\"" + term + "*\"' .";
+            query += "   }";
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    ?literal skos:prefLabel ?propertyLabel1 .";
+            query += "    ?propertyLabel1 bif:contains '\"" + term + "*\"' .";
+            query += "   }";
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    ?literal ?subproperty ?y .";
+            query += "    ?y skos:prefLabel ?instanceLabel1 .";
+            query += "    ?instanceLabel1 bif:contains '\"" + term + "*\"' .";
+            query += "   }";
+            query += "   UNION";
+            query += "   {";
+            query += "    ?x ?property ?literal .";
+            query += "    ?x a ?class .";
+            query += "    ?literal ?subproperty ?y .";
+            query += "    ?subproperty skos:prefLabel ?instanceLabel1 .";
+            query += "    ?instanceLabel1 bif:contains '\"" + term + "*\"' .";
+            query += "   }";
+            query += " }";
+            query += "}";
+
+            console.log("SPARQL DATA MODULE - FULL TEXT SEARCH");
+            console.dir(query);
+            console.dir(term);
+
+            return sparqlProxyQuery(endpoint, query).then(function (results) {
+                console.log("FULL TEXT SPARQL RESULT");
+                console.dir(results);
+
+                var roots = [];
+
+                var getPropertySOM = function getPropertySOM(sampleValue, propValue) {
+                    var sampleValueType = (sampleValue || {}).type;
+                    sampleValue = (sampleValue || {}).value;
+                    var scaleOfMeasurement;
+                    switch (sampleValueType) {
+                        case "literal":
+                        case "typed-literal":
+                            scaleOfMeasurement = predictRDFPropertySOM(propValue);
+
+                            if (!scaleOfMeasurement) {
+                                var datatype = sampleValue.datatype;
+                                if (datatype) {
+                                    scaleOfMeasurement = predictRDFDatatypeSOM(datatype);
+                                } else {
+                                    var parsedSampleValue = util['default'].toScalar(sampleValue);
+                                    scaleOfMeasurement = util['default'].predictValueSOM(parsedSampleValue);
+                                }
+                            }
+                            break;
+                        case "uri":
+                        case "bnode":
+                            scaleOfMeasurement = "Resource";
+                            break;
+                        default:
+                            scaleOfMeasurement = "Nothing";
+                            break;
+                    }
+                    return scaleOfMeasurement;
+                };
+
+                var findChildren = function findChildren(parent, results) {
+                    var children = [];
+                    //console.dir(results);
+                    for (var i = 0; i < results.length; i++) {
+                        //console.dir(results[i]);
+                        if (results[i]["class"].value === parent.id) {
+                            if (results[i].subproperty) {
+                                children.push({ id: results[i].property.value,
+                                    label: simplifyURI(results[i].property.value),
+                                    type: getPropertySOM(results[i].sampleValue, results[i].property.value),
+                                    role: "",
+                                    special: false,
+                                    children: [{
+                                        id: results[i].subproperty.value,
+                                        label: simplifyURI(results[i].subproperty.value),
+                                        type: getPropertySOM(results[i].subsampleValue, results[i].subproperty.value),
+                                        role: "",
+                                        special: false
+                                    }]
+                                });
+                            } else {
+                                children.push({
+                                    id: results[i].property.value,
+                                    label: simplifyURI(results[i].property.value),
+                                    type: getPropertySOM(results[i].sampleValue, results[i].property.value),
+                                    role: "",
+                                    special: false });
+                            }
+                        }
+                    }
+                    return children;
+                };
+
+                for (var i = 0; i < results.length; i++) {
+                    var result = results[i];
+                    //create roots
+                    var classURI = result["class"].value;
+                    if (!roots.filter(function (x) {
+                        return x.id === classURI;
+                    }).length) {
+                        roots.push({
+                            id: classURI,
+                            type: "Class",
+                            label: simplifyURI(classURI),
+                            children: {}
+                        });
+                    }
+                }
+                for (var i = 0; i < roots.length; i++) {
+                    roots[i].children = findChildren(roots[i], results);
+                }
+                console.log("SEARCH RESULT");
+                console.dir(roots);
+
+                return roots;
+            }, function (err) {
+                console.dir(err);
+            });
+        }
         function queryClasses(endpoint, graph) {
             var query = "";
 
@@ -6337,7 +6570,6 @@ define('linda-vis-fe/utils/sparql-data-module', ['exports', 'ember', 'linda-vis-
 
                     properties.push(dataInfo);
                 }
-
                 return properties;
             });
         }
@@ -6555,6 +6787,7 @@ define('linda-vis-fe/utils/sparql-data-module', ['exports', 'ember', 'linda-vis-
             queryClasses: queryClasses,
             queryProperties: queryProperties,
             queryInstances: queryInstances,
+            fullTextSearch: fullTextSearch,
             parse: parse
         };
     })();
@@ -6686,244 +6919,316 @@ define('linda-vis-fe/utils/template-mapping', ['exports'], function (exports) {
 });
 define('linda-vis-fe/utils/tree-selection-data-module', ['exports', 'linda-vis-fe/utils/csv-data-module', 'linda-vis-fe/utils/sparql-data-module'], function (exports, csv_data_module, sparql_data_module) {
 
-    'use strict';
+  'use strict';
 
-    var treeselection_data_module = (function () {
-        var _location = "";
-        var _graph = "";
-        var _format = "";
-        var _data_module = "";
+  var treeselection_data_module = (function () {
+    var _location = "";
+    var _graph = "";
+    var _format = "";
+    var _data_module = "";
 
-        function initialize(dataInfo) {
-            console.log("SELECTION TREE COMPONENT - INITIALIZING TREE");
+    function initialize(dataInfo) {
+      console.log("SELECTION TREE COMPONENT - INITIALIZING TREE");
 
-            _location = dataInfo.location;
-            _graph = dataInfo.graph;
-            _format = dataInfo.format;
-            _data_module = getDataModule(_format);
+      _location = dataInfo.location;
+      _graph = dataInfo.graph;
+      _format = dataInfo.format;
+      _data_module = getDataModule(_format);
 
-            return _data_module.queryClasses(_location, _graph).then(function (data) {
+      return _data_module.queryClasses(_location, _graph).then(function (data) {
+        return createTreeContent(data);
+      });
+    }
+
+    function restore(dataInfo, previousSelection) {
+      console.log("SELECTION TREE COMPONENT - RESTORING TREE");
+
+      _location = dataInfo.location;
+      _graph = dataInfo.graph;
+      _format = dataInfo.format;
+      _data_module = getDataModule(_format);
+
+      var _selectedClassKey = previousSelection[0].parent[0].id;
+      var _selectedClassTitle = previousSelection[0].parent[0].label;
+
+      return _data_module.queryClasses(_location, _graph).then(function (classes) {
+        var treecontent = createTreeContent(classes);
+        var branch = _.filter(treecontent, function (item) {
+          if (_.isEqual(item.key, _selectedClassKey)) {
+            return true;
+          }
+        });
+
+        branch[0]["expanded"] = true;
+        branch[0]["selected"] = true;
+        branch[0]["lazy"] = false;
+        branch[0]["children"] = [];
+        branch[0]["parent"] = [{ id: _selectedClassKey, label: _selectedClassTitle }];
+
+        return restoreTreeContent(previousSelection, branch[0]).then(function () {
+          return treecontent;
+        });
+      });
+    }
+
+    /** SEARCH**/
+
+    function search(dataInfo, term) {
+      console.log("SELECTION TREE COMPONENT - SEARCH KEYWORD");
+      console.log("KEYWORD");
+      console.dir(term);
+
+      _location = dataInfo.location;
+      _graph = dataInfo.graph;
+      _format = dataInfo.format;
+      _data_module = getDataModule(_format);
+      var labelNoResults = document.getElementById("NoResults");
+      var labelTooShort = document.getElementById("TooShort");
+      if (term.length < 4) {
+        labelNoResults.className = "hidden";
+        if (term.length > 0) {
+          labelTooShort.className = "";
+        } else {
+          labelTooShort.className = "hidden";
+        }
+        return;
+      } else {
+        labelTooShort.className = "hidden";
+      }
+      return _data_module.fullTextSearch(_location, _graph, term).then(function (classes) {
+        var treecontent = createSearchResultTreeContent(classes);
+        console.log("TREECONTENT SEARCH RESULT");
+        console.dir(treecontent);
+        if (treecontent.length) {
+          labelNoResults.className = "hidden";
+          return treecontent;
+        } else {
+          console.log("test");
+          labelNoResults.className = "";
+          return _data_module.queryClasses(_location, _graph).then(function (data) {
+            return createTreeContent(data);
+          });
+        }
+      });
+    }
+
+    function restoreTreeContent(previousSelection, branch) {
+      console.log("SELECTION TREE COMPONENT - RESTORING TREE CONTENT");
+
+      return branch._children.loadChildren(branch.parent).then(function (children) {
+        var promises = [];
+
+        for (var j = 0; j < children.length; j++) {
+          var child = children[j];
+          child["parent"] = branch.parent.concat([{ id: child.key, label: child.title }]);
+
+          for (var i = 0; i < previousSelection.length; i++) {
+            var selection = previousSelection[i];
+            var prefix = selection.parent.slice(0, child.parent.length);
+
+            if (_.isEqual(child.parent, prefix) && selection.parent.length > child.parent.length) {
+              child["expanded"] = true;
+              child["selected"] = true;
+              child["lazy"] = false;
+              child["children"] = [];
+              promises.push(restoreTreeContent(previousSelection, child));
+              break;
+            } else if (_.isEqual(child.parent, prefix)) {
+              child["selected"] = true;
+              child["lazy"] = true;
+              if (!child.grandchildren) {
+                child["lazy"] = false;
+              }
+            }
+          }
+          branch.children.push(child);
+        }
+        return $.when.apply($, promises).then(function (content) {
+          console.log("SELECTION TREE COMPONENT - FINISHED RESTORING TREE CONTENT");
+          return content;
+        });
+      });
+    }
+
+    function createTreeContent(data) {
+      console.log("SELECTION TREE COMPONENT - CREATING TREE CONTENT");
+      var treeContent = [];
+
+      for (var i = 0; i < data.length; i++) {
+        var record = data[i];
+        var id = record.id;
+        var label = record.label;
+        var type = record.type;
+        var role = record.role;
+        var special = record.special;
+        var hasGrandchildren = record.grandchildren;
+
+        treeContent.push({
+          title: label,
+          key: id,
+          lazy: hasGrandchildren,
+          extraClasses: getCSSClass(type),
+          type: type,
+          datatype: getDataType(type),
+          role: role,
+          special: special,
+          hideCheckbox: hideCheckbox(type),
+          _children: {
+            loadChildren: function loadChildren(node_path) {
+              var _class = "";
+              var _properties = "";
+
+              if (node_path.length > 1) {
+                _class = _.first(node_path);
+                _properties = _.rest(node_path);
+              } else {
+                _class = _.last(node_path);
+                _properties = [];
+              }
+
+              return _data_module.queryProperties(_location, _graph, _class, _properties).then(function (data) {
                 return createTreeContent(data);
-            });
-        }
-
-        function restore(dataInfo, previousSelection) {
-            console.log("SELECTION TREE COMPONENT - RESTORING TREE");
-
-            _location = dataInfo.location;
-            _graph = dataInfo.graph;
-            _format = dataInfo.format;
-            _data_module = getDataModule(_format);
-
-            var _selectedClassKey = previousSelection[0].parent[0].id;
-            var _selectedClassTitle = previousSelection[0].parent[0].label;
-
-            return _data_module.queryClasses(_location, _graph).then(function (classes) {
-                var treecontent = createTreeContent(classes);
-                var branch = _.filter(treecontent, function (item) {
-                    if (_.isEqual(item.key, _selectedClassKey)) {
-                        return true;
-                    }
-                });
-
-                branch[0]["expanded"] = true;
-                branch[0]["selected"] = true;
-                branch[0]["lazy"] = false;
-                branch[0]["children"] = [];
-                branch[0]["parent"] = [{ id: _selectedClassKey, label: _selectedClassTitle }];
-
-                return restoreTreeContent(previousSelection, branch[0]).then(function () {
-                    return treecontent;
-                });
-            });
-        }
-
-        function restoreTreeContent(previousSelection, branch) {
-            console.log("SELECTION TREE COMPONENT - RESTORING TREE CONTENT");
-
-            return branch._children.loadChildren(branch.parent).then(function (children) {
-                var promises = [];
-
-                for (var j = 0; j < children.length; j++) {
-                    var child = children[j];
-                    child["parent"] = branch.parent.concat([{ id: child.key, label: child.title }]);
-
-                    for (var i = 0; i < previousSelection.length; i++) {
-                        var selection = previousSelection[i];
-                        var prefix = selection.parent.slice(0, child.parent.length);
-
-                        if (_.isEqual(child.parent, prefix) && selection.parent.length > child.parent.length) {
-                            child["expanded"] = true;
-                            child["selected"] = true;
-                            child["lazy"] = false;
-                            child["children"] = [];
-                            promises.push(restoreTreeContent(previousSelection, child));
-                            break;
-                        } else if (_.isEqual(child.parent, prefix)) {
-                            child["selected"] = true;
-                            child["lazy"] = true;
-                            if (!child.grandchildren) {
-                                child["lazy"] = false;
-                            }
-                        }
-                    }
-                    branch.children.push(child);
-                }
-                return $.when.apply($, promises).then(function (content) {
-                    console.log("SELECTION TREE COMPONENT - FINISHED RESTORING TREE CONTENT");
-                    return content;
-                });
-            });
-        }
-
-        function createTreeContent(data) {
-            console.log("SELECTION TREE COMPONENT - CREATING TREE CONTENT");
-            var treeContent = [];
-
-            for (var i = 0; i < data.length; i++) {
-                var record = data[i];
-                var id = record.id;
-                var label = record.label;
-                var type = record.type;
-                var role = record.role;
-                var special = record.special;
-                var grandchildren = record.grandchildren;
-
-                treeContent.push({
-                    title: label,
-                    key: id,
-                    lazy: grandchildren,
-                    extraClasses: getCSSClass(type),
-                    type: type,
-                    datatype: getDataType(type),
-                    role: role,
-                    special: special,
-                    hideCheckbox: hideCheckbox(type),
-                    _children: {
-                        loadChildren: function loadChildren(node_path) {
-                            var _class = "";
-                            var _properties = "";
-
-                            if (node_path.length > 1) {
-                                _class = _.first(node_path);
-                                _properties = _.rest(node_path);
-                            } else {
-                                _class = _.last(node_path);
-                                _properties = [];
-                            }
-
-                            return _data_module.queryProperties(_location, _graph, _class, _properties).then(function (data) {
-                                return createTreeContent(data);
-                            });
-                        }
-                    }
-                });
+              });
             }
+          }
+        });
+      }
 
-            return treeContent;
-        }
+      return treeContent;
+    }
 
-        function getDataSelection(selection, datasource) {
-            var dataSelection = { datasource: datasource, propertyInfos: [] };
+    function createSearchResultTreeContent(data) {
+      console.log("SELECTION TREE COMPONENT - CREATING TREE CONTENT");
+      var treeContent = [];
 
-            for (var i = 0; i < selection.length; i++) {
-                var record = selection[i];
-                dataSelection["propertyInfos"].push({
-                    key: record.key,
-                    label: record.label,
-                    parent: record.parent,
-                    role: record.role,
-                    special: record.special,
-                    type: record.type,
-                    datatype: record.datatype
-                });
-            }
+      for (var i = 0; i < data.length; i++) {
+        var record = data[i];
+        var id = record.id;
+        var label = record.label;
+        var type = record.type;
+        var role = record.role;
+        var special = record.special;
+        var children = record.children || [];
 
-            return dataSelection;
-        }
+        treeContent.push({
+          key: id,
+          title: label,
+          type: type,
+          role: role,
+          special: special,
+          expanded: children.length > 0,
+          extraClasses: getCSSClass(type),
+          datatype: getDataType(type),
+          hideCheckbox: hideCheckbox(type),
+          children: createSearchResultTreeContent(children)
+        });
+      }
 
-        function getCSSClass(record) {
-            switch (record) {
-                case "Ratio":
-                    return "treenode-number-label";
-                case "Interval":
-                    return "treenode-date-label";
-                case "Nominal":
-                    return "treenode-text-label";
-                case "Geographic Latitude":
-                case "Geographic Longitude":
-                    return "treenode-spatial-label";
-                case "Class":
-                    return "treenode-class-label";
-                case "Resource":
-                case "Nothing":
-                    return "treenode-resource-label";
-            }
-            console.error("Unknown type of record  '" + record + "'");
-            return null;
-        }
+      return treeContent;
+    }
 
-        function getDataType(record) {
-            switch (record) {
-                case "Ratio":
-                    return "Number";
-                case "Interval":
-                    return "Date";
-                case "Ordinal":
-                    return "Ordinal";
-                case "Nominal":
-                    return "String";
-                case "Angular":
-                    return "Angle";
-                case "Geographic Latitude":
-                case "Geographic Longitude":
-                    return "Spatial";
-                case "Class":
-                case "Resource":
-                case "Nothing":
-                    return null;
-            }
-            console.error("Unknown data type of record  '" + record + "'");
-            return null;
-        }
+    function getDataSelection(selection, datasource) {
+      var dataSelection = { datasource: datasource, propertyInfos: [] };
 
-        function hideCheckbox(record) {
-            switch (record) {
-                case "Ratio":
-                case "Interval":
-                case "Nominal":
-                case "Angular":
-                case "Geographic Latitude":
-                case "Geographic Longitude":
-                case "Class":
-                    return false;
-                case "Resource":
-                case "Nothing":
-                    return true;
-            }
-            console.error("Unknown category '" + record + "'");
-            return null;
-        }
+      for (var i = 0; i < selection.length; i++) {
+        var record = selection[i];
+        dataSelection["propertyInfos"].push({
+          key: record.key,
+          label: record.label,
+          parent: record.parent,
+          role: record.role,
+          special: record.special,
+          type: record.type,
+          datatype: record.datatype
+        });
+      }
 
-        function getDataModule(format) {
-            switch (format) {
-                case "csv":
-                    return csv_data_module['default'];
-                case "rdf":
-                    return sparql_data_module['default'];
-            }
-            console.error("Unknown data format '" + format + "'");
-            return null;
-        }
+      return dataSelection;
+    }
 
-        return {
-            initialize: initialize,
-            restore: restore,
-            getDataSelection: getDataSelection
-        };
-    })();
+    function getCSSClass(record) {
+      switch (record) {
+        case "Ratio":
+          return "treenode-number-label";
+        case "Interval":
+          return "treenode-date-label";
+        case "Nominal":
+          return "treenode-text-label";
+        case "Geographic Latitude":
+        case "Geographic Longitude":
+          return "treenode-spatial-label";
+        case "Class":
+          return "treenode-class-label";
+        case "Resource":
+        case "Nothing":
+          return "treenode-resource-label";
+      }
+      console.error("Unknown type of record  '" + record + "'");
+      return null;
+    }
 
-    exports['default'] = treeselection_data_module;
+    function getDataType(record) {
+      switch (record) {
+        case "Ratio":
+          return "Number";
+        case "Interval":
+          return "Date";
+        case "Ordinal":
+          return "Ordinal";
+        case "Nominal":
+          return "String";
+        case "Angular":
+          return "Angle";
+        case "Geographic Latitude":
+        case "Geographic Longitude":
+          return "Spatial";
+        case "Class":
+        case "Resource":
+        case "Nothing":
+          return null;
+      }
+      console.error("Unknown data type of record  '" + record + "'");
+      return null;
+    }
+
+    function hideCheckbox(record) {
+      switch (record) {
+        case "Ratio":
+        case "Interval":
+        case "Nominal":
+        case "Angular":
+        case "Geographic Latitude":
+        case "Geographic Longitude":
+        case "Class":
+          return false;
+        case "Resource":
+        case "Nothing":
+          return true;
+      }
+      console.error("Unknown category '" + record + "'");
+      return null;
+    }
+
+    function getDataModule(format) {
+      switch (format) {
+        case "csv":
+          return csv_data_module['default'];
+        case "rdf":
+          return sparql_data_module['default'];
+      }
+      console.error("Unknown data format '" + format + "'");
+      return null;
+    }
+
+    return {
+      initialize: initialize,
+      restore: restore,
+      getDataSelection: getDataSelection,
+      search: search
+    };
+  })();
+
+  exports['default'] = treeselection_data_module;
 
 });
 define('linda-vis-fe/utils/util', ['exports'], function (exports) {
@@ -7293,7 +7598,7 @@ catch(err) {
 if (runningTests) {
   require("linda-vis-fe/tests/test-helper");
 } else {
-  require("linda-vis-fe/app")["default"].create({"name":"linda-vis-fe","version":"0.0.0.540633f8"});
+  require("linda-vis-fe/app")["default"].create({"name":"linda-vis-fe","version":"0.0.0.55102cd6"});
 }
 
 /* jshint ignore:end */
