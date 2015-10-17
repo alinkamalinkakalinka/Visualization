@@ -23,7 +23,6 @@ coinf:currency rdfs:label "currency" .
 coinf:language rdfs:label "language" .
 mem:isMemberOf rdfs:label "member of" .
 cainf:country rdf:type owl:ObjectProperty ;
-              rdfs:label "country" ;
               rdfs:subPropertyOf owl:topObjectProperty .
 
 cainf:sight rdf:type owl:ObjectProperty ;
@@ -50,6 +49,7 @@ coinf:population rdf:type owl:DatatypeProperty .
 
 cap:Capital rdf:type owl:Class .
 cco:Country rdf:type owl:Class ;
+            rdfs:label "Country";
             rdfs:subClassOf cco:GeographicEntity .
 
 cco:GeographicEntity rdf:type owl:Class .
@@ -63,7 +63,8 @@ cap:Berlin rdf:type cap:Capital ;
            cainf:country cco:Germany ;
            cainf:sight csi:ReichstagBuilding .
 
-csi:ReichstagBuilding foaf:depiction <http://upload.wikimedia.org/wikipedia/commons/c/cc/Berlin_-_Reichstag_building_at_night_-_2013.jpg>.
+csi:ReichstagBuilding foaf:depiction <http://upload.wikimedia.org/wikipedia/commons/c/cc/Berlin_-_Reichstag_building_at_night_-_2013.jpg>;
+   rdfs:label "Reichstag building".
 
 cap:Bucharest rdf:type cap:Capital ;
               rdfs:label "Bucharest" ;
@@ -73,17 +74,19 @@ cap:Bucharest rdf:type cap:Capital ;
               cainf:country cco:Romania ;
               cainf:sight csi:PalastOfTheParliament .
 
-csi:PalastOfTheParliament foaf:depiction <http://www.romaniatourism.com/images/valentin-zamora/bucharest-parliament-palace.jpg>.
+csi:PalastOfTheParliament foaf:depiction <http://www.romaniatourism.com/images/valentin-zamora/bucharest-parliament-palace.jpg>;
+   rdfs:label "Palace Of The Parliament".
 
-cap: rdf:type cap:Capital ;
+cap:Budapest rdf:type cap:Capital ;
              rdfs:label "Budapest" ;
 		        geo:lat "47.601961";
 		        geo:long "19.027650";
              cainf:population "1733685" ;
              cainf:country cco:Hungary ;
-             cainf:sight csi:ChainBridge .
+             cainf:sight csi:ChainBridge.
 
-csi:ChainBridge foaf:depiction <http://cache.graphicslib.viator.com/graphicslib/media/62/budapest-chain-bridge-at-night-photo_989026-770tall.jpg>.
+csi:ChainBridge foaf:depiction <http://cache.graphicslib.viator.com/graphicslib/media/62/budapest-chain-bridge-at-night-photo_989026-770tall.jpg> ;
+   rdfs:label "Budapest Chain Bridge".
 
 cap:Vienna rdf:type cap:Capital ;
            rdfs:label "Vienna" ;
@@ -93,7 +96,8 @@ cap:Vienna rdf:type cap:Capital ;
            cainf:country cco:Austria ;	
            cainf:sight csi:SchönbrunnPalace .
 
-csi:SchönbrunnPalace foaf:depiction <http://farm1.static.flickr.com/22/32687095_0cf541c986_b.jpg>.
+csi:SchönbrunnPalace foaf:depiction <http://farm1.static.flickr.com/22/32687095_0cf541c986_b.jpg> ;
+   rdfs:label "Schönbrunn Palace".
 
 
 cco:Austria rdf:type cco:Country ;

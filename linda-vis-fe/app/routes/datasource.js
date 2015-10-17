@@ -8,7 +8,7 @@ var DatasourceRoute = Ember.Route.extend({
             graph: decodeURIComponent(params.graph),
             format: decodeURIComponent(params.format)
         });
-        return ds.save().then(function(data) {            
+        return ds.save().then(function(data) {
             return data._data;
         });
     }

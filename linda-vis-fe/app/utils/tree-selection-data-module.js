@@ -65,14 +65,36 @@ var treeselection_data_module = function () {
     _graph = dataInfo.graph;
     _format = dataInfo.format;
     _data_module = getDataModule(_format);
-
+    var labelNoResults = document.getElementById("NoResults");
+    var labelTooShort = document.getElementById("TooShort");
+    if (term.length < 4){
+      labelNoResults.className = 'hidden';
+      if(term.length > 0) {
+        labelTooShort.className = '';
+      }else {
+        labelTooShort.className= 'hidden';
+      }
+      return;
+    }else {
+      labelTooShort.className= 'hidden';
+    }
     return _data_module.fullTextSearch(_location, _graph, term).then(function (classes) {
       // NOTE: The loadChildren function inside createTreeContent internally calls _data_module.queryProperties,
       //       which returns nodes for all child properties of a node. Is this really what you want?
       var treecontent = createSearchResultTreeContent(classes);
-      console.log("TREECONTENT SEARCH RESULT")
-      console.dir(treecontent)
-      return treecontent;
+      console.log("TREECONTENT SEARCH RESULT");
+      console.dir(treecontent);
+      if (treecontent.length){
+        labelNoResults.className= 'hidden';
+        return treecontent;
+      } else {
+        console.log('test');
+        labelNoResults.className= '';
+        return _data_module.queryClasses(_location, _graph).then(function (data) {
+          return createTreeContent(data);
+        });
+      }
+      ///else idk what to do, maybe return some error message?
     });
   }
 
